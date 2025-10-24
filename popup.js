@@ -1,0 +1,3 @@
+document.getElementById("openWorkspace").addEventListener("click", () => {
+  chrome.sidePanel.open({ windowId: chrome.windows.WINDOW_ID_CURRENT });
+});

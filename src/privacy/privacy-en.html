@@ -1,0 +1,76 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>IUB – Privacy Policy</title>
+    <link rel="icon" type="image/png" sizes="16x16" href="../../assets/icon16.png" />
+    <link rel="icon" type="image/png" sizes="48x48" href="../../assets/icon48.png" />
+    <link rel="icon" type="image/png" sizes="128x128" href="../../assets/icon128.png" />
+    <style>
+      body { font-family: -apple-system, BlinkMacSystemFont, Segoe UI, Roboto, sans-serif; margin: 0; padding: 24px; color: #0f172a; background: #f8fafc; }
+      .container { max-width: 900px; margin: 0 auto; background: #fff; border-radius: 16px; box-shadow: 0 10px 30px rgba(0,0,0,0.08); padding: 28px; }
+      h1 { margin: 0 0 12px; font-size: 28px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+      h2 { margin: 24px 0 8px; font-size: 20px; color: #1e293b; }
+      p, li { line-height: 1.7; }
+      .pill { display: inline-block; padding: 6px 10px; border-radius: 999px; background: #eef2ff; color: #4338ca; font-weight: 600; font-size: 12px; }
+      .note { background: #f1f5f9; border-left: 4px solid #667eea; padding: 12px; border-radius: 8px; }
+      .grid { display: grid; gap: 12px; grid-template-columns: 1fr; }
+      .footer { margin-top: 28px; font-size: 13px; color: #475569; }
+      a { color: #4f46e5; text-decoration: none; }
+      a:hover { text-decoration: underline; }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <div style="display:flex; align-items:center; gap:10px; margin-bottom:8px;">
+        <img src="../../assets/icon48.png" alt="IUB" width="32" height="32" />
+        <span class="pill">Privacy Policy</span>
+      </div>
+      <h1>IUB – Privacy Policy</h1>
+      <p>Updated: <strong><span id="updated"></span></strong></p>
+
+      <h2>What is stored locally</h2>
+      <ul>
+        <li><strong>Sessions and screenshots:</strong> Stored in your browser’s extension storage (<code>chrome.storage.local</code>) on your machine. We do not upload them anywhere.</li>
+        <li><strong>Descriptions/comments:</strong> Text you write per step is stored locally alongside screenshots.</li>
+        <li><strong>Preferences:</strong> Export settings, click indicator toggle, and other preferences are stored locally.</li>
+        <li><strong>OpenAI API key (optional):</strong> If you add an API key, it is stored locally to call OpenAI on your behalf.</li>
+      </ul>
+
+      <h2>What is sent from your device</h2>
+      <ul>
+        <li><strong>Nothing is sent automatically:</strong> The extension has no telemetry, analytics, or hidden uploads.</li>
+        <li><strong>AI description (optional):</strong> When you request an AI description for a screenshot, that image and the prompt are sent to OpenAI’s APIs. This only occurs if you configured a valid API key and explicitly click the “🤖” button.</li>
+        <li><strong>Export:</strong> When exporting to PDF/Markdown, the file is generated locally in your browser. No data is sent to us.</li>
+      </ul>
+
+      <h2>Who has access</h2>
+      <ul>
+        <li><strong>You:</strong> Full control. You can delete all content from the options/settings or the editor.</li>
+        <li><strong>OpenAI:</strong> Only when you explicitly request AI descriptions with your own key. In that case, data is processed under OpenAI’s terms.</li>
+        <li><strong>PayPal:</strong> When donating via PayPal, you are redirected to PayPal. We do not receive any card/account details—only transaction references from PayPal.</li>
+      </ul>
+
+      <h2>Deleting data</h2>
+      <p>You can delete all sessions and screenshots from the options page (“Delete all sessions”) or directly from the editor. Preferences can be reset from the options page.</p>
+
+      <h2>Contact</h2>
+      <p>Questions? Contact us at <a href="mailto:support@iub-rec.com">support@iub-rec.com</a>.</p>
+
+      <div class="note">
+        <strong>Honesty:</strong> We do not secretly collect your data. All network requests are initiated by you (AI descriptions or donations) and go directly to the third-party services (OpenAI/PayPal).
+      </div>
+
+      <div class="footer">
+        © <span id="year"></span> IUB. This page runs as part of your extension and can also be opened via: chrome-extension://…/src/privacy/privacy-en.html
+      </div>
+    </div>
+
+    <script>
+      const d = new Date();
+      document.getElementById('updated').textContent = d.toLocaleDateString('en-GB') + ' ' + d.toLocaleTimeString('en-GB');
+      document.getElementById('year').textContent = String(d.getFullYear());
+    </script>
+  </body>
+</html>

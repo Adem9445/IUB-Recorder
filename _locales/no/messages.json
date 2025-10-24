@@ -1,0 +1,118 @@
+{
+  "extensionName": {
+    "message": "IUB",
+    "description": "Navn på utvidelsen"
+  },
+  "extensionDescription": {
+    "message": "Ultramoderne AI-drevet skjermopptak og dokumentasjonsplattform",
+    "description": "Beskrivelse av utvidelsen"
+  },
+  "startRecording": {
+    "message": "Start Opptak",
+    "description": "Knapp for å starte opptak"
+  },
+  "stopRecording": {
+    "message": "Stopp Opptak",
+    "description": "Knapp for å stoppe opptak"
+  },
+  "exportPDF": {
+    "message": "Eksporter PDF",
+    "description": "Knapp for å eksportere som PDF"
+  },
+  "exportMarkdown": {
+    "message": "Eksporter Markdown",
+    "description": "Knapp for å eksportere som Markdown"
+  },
+  "addRichNote": {
+    "message": "Legg til Rik Notat",
+    "description": "Knapp for å legge til rik tekst notat"
+  },
+  "captureFullPage": {
+    "message": "Ta Fullside Skjermbilde",
+    "description": "Ta fullside skjermbilde"
+  },
+  "captureVisible": {
+    "message": "Ta Synlig Område",
+    "description": "Ta synlig område"
+  },
+  "openEditor": {
+    "message": "Åpne Editor",
+    "description": "Åpne editor"
+  },
+  "privacyMode": {
+    "message": "Personvernmodus",
+    "description": "Personvernmodus bryter"
+  },
+  "autoBlur": {
+    "message": "Auto-slør sensitiv data",
+    "description": "Auto-slør sensitiv informasjon"
+  },
+  "screenRecording": {
+    "message": "Skjermopptak",
+    "description": "Skjermopptak funksjon"
+  },
+  "recordScreen": {
+    "message": "Ta opp Skjerm",
+    "description": "Start skjermopptak"
+  },
+  "stopRecordingScreen": {
+    "message": "Stopp Opptak",
+    "description": "Stopp skjermopptak"
+  },
+  "zoomIn": {
+    "message": "Zoom Inn",
+    "description": "Zoom inn på bilde"
+  },
+  "zoomOut": {
+    "message": "Zoom Ut",
+    "description": "Zoom ut på bilde"
+  },
+  "resetZoom": {
+    "message": "Tilbakestill Zoom",
+    "description": "Tilbakestill zoom nivå"
+  },
+  "fullScreen": {
+    "message": "Fullskjerm",
+    "description": "Vis i fullskjerm"
+  },
+  "save": {
+    "message": "Lagre",
+    "description": "Lagre knapp"
+  },
+  "copy": {
+    "message": "Kopier",
+    "description": "Kopier til utklippstavle"
+  },
+  "share": {
+    "message": "Del",
+    "description": "Del knapp"
+  },
+  "delete": {
+    "message": "Slett",
+    "description": "Slett knapp"
+  },
+  "settings": {
+    "message": "Innstillinger",
+    "description": "Innstillinger knapp"
+  },
+  "keyboardShortcuts": {
+    "message": "Tastatursnarveier",
+    "description": "Tastatursnarveier seksjon"
+  },
+  "shortcuts_fullPage": {
+    "message": "Alt+Shift+P - Ta fullside skjermbilde",
+    "description": "Fullside snarvei"
+  },
+  "shortcuts_visible": {
+    "message": "Alt+Shift+V - Ta synlig område",
+    "description": "Synlig område snarvei"
+  },
+  "shortcuts_toggleRecording": {
+    "message": "Alt+Shift+R - Start/Stopp opptak",
+    "description": "Toggle opptak snarvei"
+  },
+  "shortcuts_openEditor": {
+    "message": "Ctrl+Shift+E - Åpne editor",
+    "description": "Åpne editor snarvei"
+  }
+}

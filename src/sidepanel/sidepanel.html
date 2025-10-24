@@ -1,0 +1,599 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>IUB Workspace</title>
+    <link rel="icon" type="image/png" sizes="16x16" href="../../assets/icon16.png" />
+    <link rel="icon" type="image/png" sizes="48x48" href="../../assets/icon48.png" />
+    <link rel="icon" type="image/png" sizes="128x128" href="../../assets/icon128.png" />
+    <!-- Lightweight inline animations - no external dependencies -->
+    <style type="text/css">
+      :root,
+      :host {
+        --fa-font-solid: normal 900 1em/1 "Font Awesome 6 Solid";
+        --fa-font-regular: normal 400 1em/1 "Font Awesome 6 Regular";
+        --fa-font-light: normal 300 1em/1 "Font Awesome 6 Light";
+        --fa-font-thin: normal 100 1em/1 "Font Awesome 6 Thin";
+        --fa-font-duotone: normal 900 1em/1 "Font Awesome 6 Duotone";
+        --fa-font-sharp-solid: normal 900 1em/1 "Font Awesome 6 Sharp";
+        --fa-font-sharp-regular: normal 400 1em/1 "Font Awesome 6 Sharp";
+        --fa-font-sharp-light: normal 300 1em/1 "Font Awesome 6 Sharp";
+        --fa-font-sharp-thin: normal 100 1em/1 "Font Awesome 6 Sharp";
+        --fa-font-brands: normal 400 1em/1 "Font Awesome 6 Brands";
+      }
+
+      svg:not(:root).svg-inline--fa,
+      svg:not(:host).svg-inline--fa {
+        overflow: visible;
+        box-sizing: content-box;
+      }
+
+      .svg-inline--fa {
+        display: var(--fa-display, inline-block);
+        height: 1em;
+        overflow: visible;
+        vertical-align: -0.125em;
+      }
+      .svg-inline--fa.fa-2xs {
+        vertical-align: 0.1em;
+      }
+      .svg-inline--fa.fa-xs {
+        vertical-align: 0em;
+      }
+      .svg-inline--fa.fa-sm {
+        vertical-align: -0.0714285705em;
+      }
+      .svg-inline--fa.fa-lg {
+        vertical-align: -0.2em;
+      }
+      .svg-inline--fa.fa-xl {
+        vertical-align: -0.25em;
+      }
+      .svg-inline--fa.fa-2xl {
+        vertical-align: -0.3125em;
+      }
+      .svg-inline--fa.fa-pull-left {
+        margin-right: var(--fa-pull-margin, 0.3em);
+        width: auto;
+      }
+      .svg-inline--fa.fa-pull-right {
+        margin-left: var(--fa-pull-margin, 0.3em);
+        width: auto;
+      }
+      .svg-inline--fa.fa-li {
+        width: var(--fa-li-width, 2em);
+        top: 0.25em;
+      }
+      .svg-inline--fa.fa-fw {
+        width: var(--fa-fw-width, 1.25em);
+      }
+
+      .fa-layers svg.svg-inline--fa {
+        bottom: 0;
+        left: 0;
+        margin: auto;
+        position: absolute;
+        right: 0;
+        top: 0;
+      }
+
+      .fa-layers-counter,
+      .fa-layers-text {
+        display: inline-block;
+        position: absolute;
+        text-align: center;
+      }
+
+      .fa-layers {
+        display: inline-block;
+        height: 1em;
+        position: relative;
+        text-align: center;
+        vertical-align: -0.125em;
+        width: 1em;
+      }
+      .fa-layers svg.svg-inline--fa {
+        -webkit-transform-origin: center center;
+        transform-origin: center center;
+      }
+
+      .fa-layers-text {
+        left: 50%;
+        top: 50%;
+        -webkit-transform: translate(-50%, -50%);
+        transform: translate(-50%, -50%);
+        -webkit-transform-origin: center center;
+        transform-origin: center center;
+      }
+
+      .fa-layers-counter {
+        background-color: var(--fa-counter-background-color, #ff253a);
+        border-radius: var(--fa-counter-border-radius, 1em);
+        box-sizing: border-box;
+        color: var(--fa-inverse, #fff);
+        line-height: var(--fa-counter-line-height, 1);
+        max-width: var(--fa-counter-max-width, 5em);
+        min-width: var(--fa-counter-min-width, 1.5em);
+        overflow: hidden;
+        padding: var(--fa-counter-padding, 0.25em 0.5em);
+        right: var(--fa-right, 0);
+        text-overflow: ellipsis;
+        top: var(--fa-top, 0);
+        -webkit-transform: scale(var(--fa-counter-scale, 0.25));
+        transform: scale(var(--fa-counter-scale, 0.25));
+        -webkit-transform-origin: top right;
+        transform-origin: top right;
+      }
+
+      .fa-layers-bottom-right {
+        bottom: var(--fa-bottom, 0);
+        right: var(--fa-right, 0);
+        top: auto;
+        -webkit-transform: scale(var(--fa-layers-scale, 0.25));
+        transform: scale(var(--fa-layers-scale, 0.25));
+        -webkit-transform-origin: bottom right;
+        transform-origin: bottom right;
+      }
+
+      .fa-layers-bottom-left {
+        bottom: var(--fa-bottom, 0);
+        left: var(--fa-left, 0);
+        right: auto;
+        top: auto;
+        -webkit-transform: scale(var(--fa-layers-scale, 0.25));
+        transform: scale(var(--fa-layers-scale, 0.25));
+        -webkit-transform-origin: bottom left;
+        transform-origin: bottom left;
+      }
+
+      .fa-layers-top-right {
+        top: var(--fa-top, 0);
+        right: var(--fa-right, 0);
+        -webkit-transform: scale(var(--fa-layers-scale, 0.25));
+        transform: scale(var(--fa-layers-scale, 0.25));
+        -webkit-transform-origin: top right;
+        transform-origin: top right;
+      }
+
+      .fa-layers-top-left {
+        left: var(--fa-left, 0);
+        right: auto;
+        top: var(--fa-top, 0);
+        -webkit-transform: scale(var(--fa-layers-scale, 0.25));
+        transform: scale(var(--fa-layers-scale, 0.25));
+        -webkit-transform-origin: top left;
+        transform-origin: top left;
+      }
+
+      /* ...the rest of the Font Awesome CSS omitted for brevity... */
+
+      /* Lightweight Animation Keyframes */
+      @keyframes fadeIn {
+        from { opacity: 0; }
+        to { opacity: 1; }
+      }
+      
+      @keyframes fadeInLeft {
+        from { opacity: 0; transform: translateX(-20px); }
+        to { opacity: 1; transform: translateX(0); }
+      }
+      
+      @keyframes fadeInRight {
+        from { opacity: 0; transform: translateX(20px); }
+        to { opacity: 1; transform: translateX(0); }
+      }
+      
+      @keyframes fadeInUp {
+        from { opacity: 0; transform: translateY(20px); }
+        to { opacity: 1; transform: translateY(0); }
+      }
+      
+      @keyframes pulse {
+        0%, 100% { opacity: 1; }
+        50% { opacity: 0.7; }
+      }
+
+      /* Custom Styles */
+      :root {
+        --brand-500: #3c2edd;
+        --brand-600: #2e1fcc;
+        --slate-100: #f1f5f9;
+        --slate-200: #e2e8f0;
+        --slate-700: #334155;
+        --slate-800: #1e293b;
+        --danger-500: #ef4444;
+        --gradient-start: #667eea;
+        --gradient-end: #764ba2;
+      }
+
+      * {
+        box-sizing: border-box;
+        margin: 0;
+        padding: 0;
+      }
+
+      body {
+        font-family:
+          -apple-system, BlinkMacSystemFont, "Segoe UI", "Roboto", sans-serif;
+        background: linear-gradient(
+          135deg,
+          var(--gradient-start) 0%,
+          var(--gradient-end) 100%
+        );
+        color: var(--slate-800);
+        margin: 0;
+        height: 100vh;
+        overflow: hidden;
+      }
+
+      #sidepanel-home-root {
+        height: 100%;
+        width: 100%;
+        display: flex;
+        flex-direction: column;
+        padding: 20px;
+        gap: 16px;
+        background: rgba(255, 255, 255, 0.95);
+        backdrop-filter: blur(10px);
+        border-radius: 20px;
+        margin: 10px;
+        box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+      }
+
+      button {
+        padding: 12px 24px;
+        border: none;
+        border-radius: 12px;
+        font-size: 14px;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        font-family: inherit;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+      }
+      /* Round icon buttons (header) */
+      .icon-btn {
+        width: 36px;
+        height: 36px;
+        padding: 0;
+        border: none;
+        border-radius: 50%;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+        font-size: 18px;
+      }
+      button:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 6px 16px rgba(0, 0, 0, 0.15);
+      }
+      button:active {
+        transform: translateY(0);
+      }
+
+      #open-workspace {
+        background: linear-gradient(135deg, #f3f4f6 0%, #e5e7eb 100%);
+        color: var(--slate-800);
+      }
+
+      #open-workspace:hover {
+        background: linear-gradient(135deg, #e5e7eb 0%, #d1d5db 100%);
+      }
+
+      #start-recording {
+        background: linear-gradient(
+          135deg,
+          var(--gradient-start) 0%,
+          var(--gradient-end) 100%
+        );
+        color: white;
+        position: relative;
+        overflow: hidden;
+      }
+
+      #start-recording::before {
+        content: "";
+        position: absolute;
+        top: 0;
+        left: -100%;
+        width: 100%;
+        height: 100%;
+        background: linear-gradient(
+          90deg,
+          transparent,
+          rgba(255, 255, 255, 0.3),
+          transparent
+        );
+        transition: left 0.5s;
+      }
+
+      #start-recording:hover::before {
+        left: 100%;
+      }
+
+      #start-recording:hover {
+        background: linear-gradient(
+          135deg,
+          var(--gradient-end) 0%,
+          var(--gradient-start) 100%
+        );
+      }
+
+      #stop-recording {
+        background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+        color: white;
+      }
+
+      #stop-recording:hover {
+        background: linear-gradient(135deg, #dc2626 0%, #b91c1c 100%);
+      }
+
+      #chat-container {
+        flex: 1;
+        overflow-y: auto;
+        padding: 16px;
+        background: linear-gradient(to bottom, #fafafa 0%, #f3f4f6 100%);
+        border-radius: 16px;
+        box-shadow: inset 0 2px 8px rgba(0, 0, 0, 0.05);
+      }
+
+      .chat-bubble {
+        background: linear-gradient(135deg, #ffffff 0%, #f9fafb 100%);
+        border-radius: 16px;
+        padding: 20px;
+        margin-bottom: 20px;
+        box-shadow: 0 4px 16px rgba(0, 0, 0, 0.08);
+        border: 1px solid rgba(255, 255, 255, 0.8);
+        transition: all 0.3s ease;
+      }
+      .chat-bubble:hover {
+        transform: translateY(-4px);
+        box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
+      }
+
+      .bubble-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 12px;
+      }
+
+      .bubble-step {
+        font-size: 14px;
+        font-weight: 600;
+        color: var(--slate-800);
+      }
+
+      .bubble-controls {
+        display: flex;
+        gap: 4px;
+      }
+
+      .bubble-controls button {
+        background-color: var(--slate-100);
+        border: none;
+        border-radius: 4px;
+        padding: 4px 8px;
+        cursor: pointer;
+        font-size: 12px;
+      }
+
+      .bubble-image img {
+        width: 100%;
+        border-radius: 12px;
+        border: 2px solid rgba(255, 255, 255, 0.8);
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        transition: transform 0.3s ease;
+      }
+      .bubble-image img:hover {
+        transform: scale(1.02);
+      }
+
+      .bubble-text {
+        font-size: 14px;
+        line-height: 1.6;
+        color: var(--slate-700);
+        padding: 8px;
+        background-color: var(--slate-100);
+        border-radius: 6px;
+        margin-top: 12px;
+      }
+
+      /* Modern Toggle Switch */
+      .settings-container {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 12px 16px;
+        background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
+        border-radius: 12px;
+        margin-bottom: 12px;
+        border: 1px solid rgba(0, 0, 0, 0.05);
+      }
+
+      .settings-label {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        font-size: 14px;
+        font-weight: 500;
+        color: var(--slate-700);
+      }
+
+      .toggle-switch {
+        position: relative;
+        width: 50px;
+        height: 26px;
+        cursor: pointer;
+      }
+
+      .toggle-switch input {
+        opacity: 0;
+        width: 0;
+        height: 0;
+      }
+
+      .toggle-slider {
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: linear-gradient(135deg, #e2e8f0 0%, #cbd5e1 100%);
+        border-radius: 26px;
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.1);
+      }
+
+      .toggle-slider::before {
+        content: "";
+        position: absolute;
+        height: 20px;
+        width: 20px;
+        left: 3px;
+        bottom: 3px;
+        background: white;
+        border-radius: 50%;
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+      }
+
+      .toggle-switch input:checked + .toggle-slider {
+        background: linear-gradient(135deg, var(--gradient-start) 0%, var(--gradient-end) 100%);
+      }
+
+      .toggle-switch input:checked + .toggle-slider::before {
+        transform: translateX(24px);
+      }
+
+      .toggle-switch:hover .toggle-slider {
+        box-shadow: inset 0 2px 6px rgba(0, 0, 0, 0.15), 0 0 0 3px rgba(102, 126, 234, 0.1);
+      }
+
+      /* Settings button hover effect */
+      #open-settings-btn:hover {
+        transform: scale(1.1) rotate(90deg);
+        box-shadow: 0 6px 20px rgba(102, 126, 234, 0.5);
+      }
+
+      #open-settings-btn:active {
+        transform: scale(0.95) rotate(90deg);
+      }
+
+      /* Toast animations */
+      @keyframes slideUp {
+        from { transform: translateX(-50%) translateY(20px); opacity: 0; }
+        to { transform: translateX(-50%) translateY(0); opacity: 1; }
+      }
+      
+      @keyframes slideDown {
+        from { transform: translateX(-50%) translateY(0); opacity: 1; }
+        to { transform: translateX(-50%) translateY(20px); opacity: 0; }
+      }
+      
+      @keyframes fadeOut {
+        from { opacity: 1; }
+        to { opacity: 0; }
+      }
+    </style>
+  </head>
+  <body>
+    <div id="sidepanel-home-root" style="animation: fadeIn 0.8s ease-in-out;">
+      <!-- Header with Settings Button -->
+      <div style="
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 16px;
+        padding-bottom: 12px;
+        border-bottom: 2px solid rgba(102, 126, 234, 0.2);
+        animation: fadeInUp 0.4s ease-in-out;
+      ">
+        <h3 style="
+          margin: 0;
+          font-size: 18px;
+          font-weight: 700;
+          color: #1e293b;
+          background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+          -webkit-background-clip: text;
+          -webkit-text-fill-color: transparent;
+          background-clip: text;
+          "> 
+          📸 IUB
+        </h3>
+        <div class="icon-toolbar" style="display:flex; gap:8px; align-items:center;">
+          <button id="menu-btn" class="icon-btn" title="Meny" style="
+            width: 36px; height: 36px; border-radius: 50%;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color:white; display:flex; align-items:center; justify-content:center;
+            box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+          ">⚙️</button>
+          <button id="toggle-click-indicator-btn" class="icon-btn" title="Vis klikk-indikator" aria-pressed="true" style="
+            width: 36px; height: 36px; border-radius: 50%;
+            background: #f1f5f9; color:#0f172a; display:flex; align-items:center; justify-content:center;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+          ">🎯</button>
+          <button id="open-workspace" class="icon-btn" title="Open Workspace" style="
+            width: 36px; height: 36px; border-radius: 50%;
+            background: #f8fafc; color:#0f172a; display:flex; align-items:center; justify-content:center;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+          ">🏠</button>
+          <button id="open-privacy" class="icon-btn" title="Personvernerklæring" style="
+            width: 36px; height: 36px; border-radius: 50%;
+            background: #f8fafc; color:#0f172a; display:flex; align-items:center; justify-content:center;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+          ">🔒</button>
+          <button id="donate-btn" class="icon-btn" title="Doner til videre utvikling" style="
+            width: 36px; height: 36px; border-radius: 50%;
+            background: #fee2e2; color:#b91c1c; display:flex; align-items:center; justify-content:center;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+          ">❤️</button>
+        </div>
+      </div>
+
+      <!-- API Key Info banner removed; replaced by compact info icon in header -->
+
+      <!-- Hidden checkbox to preserve existing JS logic; controlled by icon button -->
+      <div style="display:none;">
+        <input type="checkbox" id="show-click-indicator" checked>
+      </div>
+
+      <!-- Big Open Workspace button removed; use icon in header -->
+      <button
+        id="start-recording"
+        style="animation: fadeInRight 0.8s ease-in-out;"
+      >
+        <span>🎬</span> Start Recording
+      </button>
+      <button
+        id="stop-recording"
+        hidden
+        style="animation: pulse 1.5s ease-in-out infinite;"
+      >
+        <span>⏹️</span> Stop Recording
+      </button>
+      <div id="chat-container"></div>
+      <!-- Hidden PayPal Donate Form -->
+      <div style="display:none;">
+        <form id="donate-form" action="https://www.paypal.com/donate" method="post" target="_blank">
+          <input type="hidden" name="business" value="4CYARW24XNSSG" />
+          <input type="hidden" name="no_recurring" value="0" />
+          <input type="hidden" name="item_name" value="Videre utvikling IUB" />
+          <input type="hidden" name="currency_code" value="NOK" />
+          <input type="image" src="https://www.paypalobjects.com/no_NO/i/btn/btn_donate_LG.gif" border="0" name="submit" title="PayPal - The safer, easier way to pay online!" alt="Doner med PayPal-knappen" />
+          <img alt="" border="0" src="https://www.paypal.com/no_NO/i/scr/pixel.gif" width="1" height="1" />
+        </form>
+      </div>
+    </div>
+    <script type="module" src="./open-workspace.js"></script>
+    <script type="module" src="./start-recording.js"></script>
+    <script type="module" src="./click-indicator-toggle.js"></script>
+    <script type="module" src="./api-key-check.js"></script>
+    <script type="module" src="./i18n.js"></script>
+    <script type="module" src="./menu.js"></script>
+    <script type="module" src="./open-privacy.js"></script>
+    <script type="module" src="./donate.js"></script>
+  </body>
+</html>

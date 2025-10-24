@@ -1,0 +1,26 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>IUB</title>
+    <link rel="icon" type="image/png" sizes="16x16" href="../../assets/icon16.png" />
+    <link rel="icon" type="image/png" sizes="48x48" href="../../assets/icon48.png" />
+    <link rel="icon" type="image/png" sizes="128x128" href="../../assets/icon128.png" />
+    <link rel="stylesheet" href="../../assets/style.css" />
+  </head>
+  <body>
+    <div class="sidebar-chat">
+      <div id="chat-window" class="chat-window"></div>
+      <div class="chat-input-container">
+        <input id="chat-input" type="text" placeholder="Type a message..." />
+        <button id="send-btn">Send</button>
+      </div>
+    </div>
+
+    <!-- Load only functional modules -->
+    <script type="module" src="./chat-i18n.js"></script>
+    <script type="module" src="./chat-ui.js"></script>
+    <script type="module" src="./main.js"></script>
+  </body>
+</html>

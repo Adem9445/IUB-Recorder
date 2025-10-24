@@ -1,0 +1,118 @@
+{
+  "extensionName": {
+    "message": "IUB",
+    "description": "Name of the extension"
+  },
+  "extensionDescription": {
+    "message": "Ultra-modern AI-powered screen capture and documentation platform",
+    "description": "Description of the extension"
+  },
+  "startRecording": {
+    "message": "Start Recording",
+    "description": "Button to start recording"
+  },
+  "stopRecording": {
+    "message": "Stop Recording",
+    "description": "Button to stop recording"
+  },
+  "exportPDF": {
+    "message": "Export PDF",
+    "description": "Button to export as PDF"
+  },
+  "exportMarkdown": {
+    "message": "Export Markdown",
+    "description": "Button to export as Markdown"
+  },
+  "addRichNote": {
+    "message": "Add Rich Note",
+    "description": "Button to add rich text note"
+  },
+  "captureFullPage": {
+    "message": "Capture Full Page",
+    "description": "Capture full page screenshot"
+  },
+  "captureVisible": {
+    "message": "Capture Visible Area",
+    "description": "Capture visible area"
+  },
+  "openEditor": {
+    "message": "Open Editor",
+    "description": "Open editor"
+  },
+  "privacyMode": {
+    "message": "Privacy Mode",
+    "description": "Privacy mode toggle"
+  },
+  "autoBlur": {
+    "message": "Auto-blur sensitive data",
+    "description": "Auto-blur sensitive information"
+  },
+  "screenRecording": {
+    "message": "Screen Recording",
+    "description": "Screen recording feature"
+  },
+  "recordScreen": {
+    "message": "Record Screen",
+    "description": "Start screen recording"
+  },
+  "stopRecordingScreen": {
+    "message": "Stop Recording",
+    "description": "Stop screen recording"
+  },
+  "zoomIn": {
+    "message": "Zoom In",
+    "description": "Zoom in on image"
+  },
+  "zoomOut": {
+    "message": "Zoom Out",
+    "description": "Zoom out on image"
+  },
+  "resetZoom": {
+    "message": "Reset Zoom",
+    "description": "Reset zoom level"
+  },
+  "fullScreen": {
+    "message": "Full Screen",
+    "description": "View in full screen"
+  },
+  "save": {
+    "message": "Save",
+    "description": "Save button"
+  },
+  "copy": {
+    "message": "Copy",
+    "description": "Copy to clipboard"
+  },
+  "share": {
+    "message": "Share",
+    "description": "Share button"
+  },
+  "delete": {
+    "message": "Delete",
+    "description": "Delete button"
+  },
+  "settings": {
+    "message": "Settings",
+    "description": "Settings button"
+  },
+  "keyboardShortcuts": {
+    "message": "Keyboard Shortcuts",
+    "description": "Keyboard shortcuts section"
+  },
+  "shortcuts_fullPage": {
+    "message": "Alt+Shift+P - Capture full page",
+    "description": "Full page shortcut"
+  },
+  "shortcuts_visible": {
+    "message": "Alt+Shift+V - Capture visible area",
+    "description": "Visible area shortcut"
+  },
+  "shortcuts_toggleRecording": {
+    "message": "Alt+Shift+R - Start/Stop recording",
+    "description": "Toggle recording shortcut"
+  },
+  "shortcuts_openEditor": {
+    "message": "Ctrl+Shift+E - Open editor",
+    "description": "Open editor shortcut"
+  }
+}
