@@ -83,6 +83,13 @@
               <div style="background: rgba(255, 255, 255, 0.2); height: 8px; border-radius: 4px; overflow: hidden; margin-top: 10px;">
                 <div id="storage-bar" style="background: white; height: 100%; width: 0%; transition: width 0.5s ease;"></div>
               </div>
+              <div id="cloud-status-row" style="display:flex; align-items:center; gap:8px; margin-top: 16px; font-weight:600;">
+                <span>☁️ Sky-synk:</span>
+                <span id="cloud-status-text" data-state="local">Lokal lagring</span>
+              </div>
+              <small id="cloud-status-hint" style="display:block; margin-top:4px; font-size:12px; opacity:0.85;">
+                Konfigurer skysynk under for å unngå at lokal lagring blir full.
+              </small>
               <button id="delete-all-sessions-btn" style="
                 margin-top: 15px;
                 padding: 8px 16px;
@@ -191,6 +198,103 @@
                   <option value="full">Full screen</option>
                   <option value="click">Area around click</option>
                 </select>
+              </td>
+            </tr>
+          </table>
+
+          <h3 style="margin: 24px 0 8px 0;">Sky-lagring</h3>
+          <table role="presentation">
+            <tr>
+              <th scope="row">
+                <label for="storage_provider">Synk til:</label>
+              </th>
+              <td>
+                <select name="storage_provider" id="storage_provider" aria-label="Velg skylagring">
+                  <option value="local">Kun lokal lagring (standard)</option>
+                  <option value="dropbox">Dropbox</option>
+                  <option value="onedrive">Microsoft OneDrive</option>
+                  <option value="gdrive">Google Drive</option>
+                </select>
+                <small style="display:block; margin-top:4px; color:#555;">
+                  Velg hvor sessions skal sikkerhetskopieres. Tokens lagres kun lokalt på maskinen din.
+                </small>
+              </td>
+            </tr>
+            <tr class="cloud-field" data-provider="dropbox,onedrive,gdrive">
+              <th scope="row">
+                <label for="cloud_file_name">Filnavn:</label>
+              </th>
+              <td>
+                <input
+                  type="text"
+                  id="cloud_file_name"
+                  name="cloud_file_name"
+                  placeholder="iub-recorder-sessions.json"
+                />
+                <small style="display:block; margin-top:4px; color:#555;">
+                  JSON-fil som inneholder alle sessions. Opprettes automatisk hvis den ikke finnes.
+                </small>
+              </td>
+            </tr>
+            <tr class="cloud-field" data-provider="dropbox">
+              <th scope="row">
+                <label for="dropbox_token">Dropbox access token:</label>
+              </th>
+              <td>
+                <input type="password" id="dropbox_token" autocomplete="off" placeholder="sl.BC..." />
+                <small style="display:block; margin-top:4px; color:#555;">Generer et "App access token" fra Dropbox App Console.</small>
+              </td>
+            </tr>
+            <tr class="cloud-field" data-provider="dropbox">
+              <th scope="row">
+                <label for="dropbox_path">Dropbox mappe:</label>
+              </th>
+              <td>
+                <input type="text" id="dropbox_path" placeholder="/Apps/IUB-Recorder" />
+              </td>
+            </tr>
+            <tr class="cloud-field" data-provider="onedrive">
+              <th scope="row">
+                <label for="onedrive_token">OneDrive access token:</label>
+              </th>
+              <td>
+                <input type="password" id="onedrive_token" autocomplete="off" placeholder="EwB4A..." />
+                <small style="display:block; margin-top:4px; color:#555;">Bruk Microsoft Graph token med skrive-tilgang til OneDrive.</small>
+              </td>
+            </tr>
+            <tr class="cloud-field" data-provider="onedrive">
+              <th scope="row">
+                <label for="onedrive_path">OneDrive sti:</label>
+              </th>
+              <td>
+                <input type="text" id="onedrive_path" placeholder="/Documents/IUB-Recorder" />
+              </td>
+            </tr>
+            <tr class="cloud-field" data-provider="gdrive">
+              <th scope="row">
+                <label for="gdrive_token">Google Drive token:</label>
+              </th>
+              <td>
+                <input type="password" id="gdrive_token" autocomplete="off" placeholder="ya29.a0..." />
+                <small style="display:block; margin-top:4px; color:#555;">Bruk OAuth 2.0 access token med Drive API scope.</small>
+              </td>
+            </tr>
+            <tr class="cloud-field" data-provider="gdrive">
+              <th scope="row">
+                <label for="gdrive_folder_id">Google Drive mappe-ID:</label>
+              </th>
+              <td>
+                <input type="text" id="gdrive_folder_id" placeholder="(valgfritt)" />
+                <small style="display:block; margin-top:4px; color:#555;">La stå tom for å lagre i rot. Bruk ID fra Drive-URL.</small>
+              </td>
+            </tr>
+            <tr class="cloud-field" data-provider="gdrive">
+              <th scope="row">
+                <label for="gdrive_file_id">Eksisterende fil-ID:</label>
+              </th>
+              <td>
+                <input type="text" id="gdrive_file_id" placeholder="(valgfritt)" />
+                <small style="display:block; margin-top:4px; color:#555;">Om du allerede har en fil, lim inn ID her. Ellers opprettes ny.</small>
               </td>
             </tr>
           </table>

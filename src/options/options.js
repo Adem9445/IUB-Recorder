@@ -6,6 +6,34 @@ document.addEventListener("DOMContentLoaded", () => {
   const marginsSelect = document.getElementById("margins");
   const qColorSelect = document.getElementById("q_color");
   const qFgColorSelect = document.getElementById("q_fg_color");
+  const storageProviderSelect = document.getElementById("storage_provider");
+  const cloudFileNameInput = document.getElementById("cloud_file_name");
+  const dropboxTokenInput = document.getElementById("dropbox_token");
+  const dropboxPathInput = document.getElementById("dropbox_path");
+  const oneDriveTokenInput = document.getElementById("onedrive_token");
+  const oneDrivePathInput = document.getElementById("onedrive_path");
+  const gdriveTokenInput = document.getElementById("gdrive_token");
+  const gdriveFolderInput = document.getElementById("gdrive_folder_id");
+  const gdriveFileInput = document.getElementById("gdrive_file_id");
+  const cloudStatusText = document.getElementById("cloud-status-text");
+  const cloudStatusHint = document.getElementById("cloud-status-hint");
+  const cloudFieldRows = document.querySelectorAll(".cloud-field");
+
+  const defaultCloudSettings = {
+    provider: "local",
+    fileName: "iub-recorder-sessions.json",
+    dropboxPath: "/Apps/IUB-Recorder",
+    oneDrivePath: "/Documents/IUB-Recorder",
+    googleDriveFolderId: "",
+    googleDriveFileId: ""
+  };
+
+  const providerLabels = {
+    local: "Lokal lagring",
+    dropbox: "Dropbox",
+    onedrive: "OneDrive",
+    gdrive: "Google Drive"
+  };
 
   // Navigation buttons
   const openSidebarBtn = document.getElementById("open-sidebar");
@@ -41,8 +69,79 @@ document.addEventListener("DOMContentLoaded", () => {
     });
   }
 
+  function updateCloudHint(provider) {
+    if (!cloudStatusHint) return;
+    if (provider === "local") {
+      cloudStatusHint.textContent = "Konfigurer skysynk under for å unngå at lokal lagring blir full.";
+    } else {
+      cloudStatusHint.textContent = `Sessions blir synkronisert til ${providerLabels[provider] || provider}.`;
+    }
+  }
+
+  function updateCloudFields() {
+    if (!storageProviderSelect) return;
+    const provider = storageProviderSelect.value || "local";
+    cloudFieldRows.forEach((row) => {
+      const providers = (row.dataset.provider || "")
+        .split(",")
+        .map((p) => p.trim())
+        .filter(Boolean);
+      if (provider === "local") {
+        row.style.display = "none";
+      } else {
+        row.style.display = providers.includes(provider) ? "" : "none";
+      }
+    });
+    if (cloudStatusText) {
+      if (provider === "local") {
+        cloudStatusText.textContent = `${providerLabels.local} · Lokal lagring`;
+        cloudStatusText.dataset.state = "local";
+      } else {
+        cloudStatusText.textContent = `${providerLabels[provider] || provider} · Ikke lagret`;
+        cloudStatusText.dataset.state = "pending";
+      }
+    }
+    updateCloudHint(provider);
+  }
+
+  function refreshCloudStatus() {
+    chrome.storage.sync.get(["cloudStorageSettings"], (syncResult) => {
+      chrome.storage.local.get(["cloudStorageMeta"], (localResult) => {
+        const settings = syncResult.cloudStorageSettings || defaultCloudSettings;
+        const meta = localResult.cloudStorageMeta || {};
+        const provider = settings.provider || "local";
+        if (cloudStatusText) {
+          let text = providerLabels[provider] || provider;
+          const status = meta.status || (provider === "local" ? "local" : "pending");
+          if (status === "synced") {
+            text += " · Synkronisert";
+          } else if (status === "cached") {
+            text += " · Uendret";
+          } else if (status === "error") {
+            text += ` · Feil${meta.error ? ` (${meta.error})` : ""}`;
+          } else if (provider !== "local") {
+            text += " · Klar";
+          } else {
+            text += " · Lokal lagring";
+          }
+          cloudStatusText.textContent = text;
+          cloudStatusText.dataset.state = status;
+        }
+        updateCloudHint(provider);
+      });
+    });
+  }
+
+  if (storageProviderSelect) {
+    storageProviderSelect.addEventListener("change", () => {
+      updateCloudFields();
+    });
+  }
+
+  updateCloudFields();
+
   // Initialize feature cards
-  initializeStorageDisplay();
+  initializeStorageDisplay(refreshCloudStatus);
   initializeAIStatus();
   initializeClickIndicatorToggle();
   
@@ -76,7 +175,12 @@ document.addEventListener("DOMContentLoaded", () => {
     const apiKey = form.elements["api_key"].value;
 
     for (const [key, value] of formData.entries()) {
-      if (key !== "api_key") {
+      if (key === "api_key" || key === "storage_provider" || key.startsWith("cloud_")) {
+        continue;
+      }
+      if (form.elements[key]?.type === "checkbox") {
+        options[key] = form.elements[key].checked;
+      } else {
         options[key] = value;
       }
     }
@@ -91,13 +195,36 @@ document.addEventListener("DOMContentLoaded", () => {
       options[input.name] = Number(input.value) || 100;
     });
 
+    const provider = storageProviderSelect ? storageProviderSelect.value : "local";
+    let fileName = cloudFileNameInput?.value?.trim() || defaultCloudSettings.fileName;
+    if (fileName && !fileName.toLowerCase().endsWith(".json")) {
+      fileName = `${fileName}.json`;
+    }
+
+    const cloudSettings = {
+      provider,
+      fileName,
+      dropboxPath: dropboxPathInput?.value?.trim() || defaultCloudSettings.dropboxPath,
+      oneDrivePath: oneDrivePathInput?.value?.trim() || defaultCloudSettings.oneDrivePath,
+      googleDriveFolderId: gdriveFolderInput?.value?.trim() || "",
+      googleDriveFileId: gdriveFileInput?.value?.trim() || ""
+    };
+
+    const cloudTokens = {
+      dropboxToken: dropboxTokenInput?.value?.trim() || "",
+      oneDriveToken: oneDriveTokenInput?.value?.trim() || "",
+      googleDriveToken: gdriveTokenInput?.value?.trim() || ""
+    };
+
     // Save API key separately in local storage for security
     if (apiKey) {
       await chrome.storage.local.set({ apiKey });
     }
 
-    await chrome.storage.sync.set({ exportOptions: options });
+    await chrome.storage.local.set({ cloudStorageTokens: cloudTokens });
+    await chrome.storage.sync.set({ exportOptions: options, cloudStorageSettings: cloudSettings });
     showStatus("Saved");
+    refreshCloudStatus();
   });
 
   // Reset to defaults
@@ -109,7 +236,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
   function loadOptions() {
     // Load export options from sync storage
-    chrome.storage.sync.get(["exportOptions"], (result) => {
+    chrome.storage.sync.get(["exportOptions", "cloudStorageSettings"], (result) => {
       const options = result.exportOptions || getDefaults();
       for (const [key, value] of Object.entries(options)) {
         const el = form.elements[key];
@@ -125,13 +252,39 @@ document.addEventListener("DOMContentLoaded", () => {
       marginsSelect.dispatchEvent(new Event("change"));
       qColorSelect.dispatchEvent(new Event("change"));
       qFgColorSelect.dispatchEvent(new Event("change"));
+
+      const cloudSettings = { ...defaultCloudSettings, ...(result.cloudStorageSettings || {}) };
+      if (storageProviderSelect) {
+        storageProviderSelect.value = cloudSettings.provider || "local";
+      }
+      if (cloudFileNameInput) {
+        cloudFileNameInput.value = cloudSettings.fileName || defaultCloudSettings.fileName;
+      }
+      if (dropboxPathInput) {
+        dropboxPathInput.value = cloudSettings.dropboxPath || defaultCloudSettings.dropboxPath;
+      }
+      if (oneDrivePathInput) {
+        oneDrivePathInput.value = cloudSettings.oneDrivePath || defaultCloudSettings.oneDrivePath;
+      }
+      if (gdriveFolderInput) {
+        gdriveFolderInput.value = cloudSettings.googleDriveFolderId || "";
+      }
+      if (gdriveFileInput) {
+        gdriveFileInput.value = cloudSettings.googleDriveFileId || "";
+      }
+      updateCloudFields();
+      refreshCloudStatus();
     });
 
     // Load API key from local storage
-    chrome.storage.local.get(["apiKey"], (result) => {
+    chrome.storage.local.get(["apiKey", "cloudStorageTokens"], (result) => {
       if (result.apiKey) {
         form.elements["api_key"].value = result.apiKey;
       }
+      const tokens = result.cloudStorageTokens || {};
+      if (dropboxTokenInput) dropboxTokenInput.value = tokens.dropboxToken || "";
+      if (oneDriveTokenInput) oneDriveTokenInput.value = tokens.oneDriveToken || "";
+      if (gdriveTokenInput) gdriveTokenInput.value = tokens.googleDriveToken || "";
     });
   }
 
@@ -167,7 +320,7 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 
   // Initialize storage display
-  function initializeStorageDisplay() {
+  function initializeStorageDisplay(onMetaUpdate) {
     function updateDisplay() {
       chrome.storage.local.getBytesInUse(null, (bytes) => {
         const mb = (bytes / (1024 * 1024)).toFixed(2);
@@ -190,9 +343,12 @@ document.addEventListener("DOMContentLoaded", () => {
         }
       });
     }
-    
+
     updateDisplay();
-    
+    if (typeof onMetaUpdate === "function") {
+      onMetaUpdate();
+    }
+
     // Delete all sessions button
     const deleteBtn = document.getElementById('delete-all-sessions-btn');
     if (deleteBtn) {
@@ -208,6 +364,9 @@ document.addEventListener("DOMContentLoaded", () => {
           await chrome.storage.local.remove(['sessions', 'captures']);
           showStatus('✅ Alle sessions slettet!');
           updateDisplay(); // Refresh storage display
+          if (typeof onMetaUpdate === "function") {
+            onMetaUpdate();
+          }
         } catch (error) {
           console.error('Failed to delete sessions:', error);
           showStatus('❌ Feil ved sletting');

@@ -1,3 +1,6 @@
+import { sessionSync, getCloudSyncMeta } from "../utils/session-sync.js";
+import { PROVIDERS } from "../utils/cloud-storage.js";
+
 // IUB Standalone Editor (No external dependencies)
 // Pure JavaScript implementation
 
@@ -8,6 +11,103 @@ let draggedElement = null;
 let currentCrop = null; // { index, img, sel: {x,y,w,h}, listeners: [], ui: {layer, rect, toolbar} }
 // Track last active step to apply keyboard actions
 let lastActiveStepIndex = null;
+
+const domCache = new Map();
+const scheduleIdle =
+  typeof window !== "undefined" && typeof window.requestIdleCallback === "function"
+    ? (cb) => window.requestIdleCallback(cb, { timeout: 400 })
+    : (cb) => requestAnimationFrame(cb);
+const INITIAL_HYDRATE_COUNT = 6;
+const virtualizationOptions = { root: null, rootMargin: "200px", threshold: 0.01 };
+let activeGridObserver = null;
+
+const providerLabels = {
+  [PROVIDERS.LOCAL]: "Lokal lagring",
+  [PROVIDERS.DROPBOX]: "Dropbox",
+  [PROVIDERS.ONEDRIVE]: "OneDrive",
+  [PROVIDERS.GDRIVE]: "Google Drive"
+};
+
+const providerIcons = {
+  [PROVIDERS.LOCAL]: "💾",
+  [PROVIDERS.DROPBOX]: "🗂️",
+  [PROVIDERS.ONEDRIVE]: "☁️",
+  [PROVIDERS.GDRIVE]: "📁"
+};
+
+function getElement(id) {
+  if (!domCache.has(id)) {
+    domCache.set(id, document.getElementById(id));
+  }
+  return domCache.get(id);
+}
+
+function clearCachedElement(id) {
+  domCache.delete(id);
+}
+
+function debounce(fn, wait = 200) {
+  let timeout;
+  return (...args) => {
+    clearTimeout(timeout);
+    timeout = setTimeout(() => fn(...args), wait);
+  };
+}
+
+function renderCloudStatus(meta = {}) {
+  const badge = getElement("cloud-status-badge");
+  if (!badge) return;
+
+  const provider = meta.provider || PROVIDERS.LOCAL;
+  const icon = providerIcons[provider] || "☁️";
+  const providerText = providerLabels[provider] || provider;
+  const status = meta.status || "local";
+
+  let statusLabel = "";
+  switch (status) {
+    case "synced":
+      statusLabel = "Synkronisert";
+      break;
+    case "cached":
+      statusLabel = "Uendret";
+      break;
+    case "error":
+      statusLabel = "Feil";
+      break;
+    case "pending":
+      statusLabel = "Klar";
+      break;
+    case "local":
+      statusLabel = provider === PROVIDERS.LOCAL ? "Lokal" : "Klar";
+      break;
+    default:
+      statusLabel = status;
+  }
+
+  const text = statusLabel ? `${providerText} · ${statusLabel}` : providerText;
+  badge.innerHTML = `${icon} <span>${text}</span>`;
+  badge.dataset.state = status;
+  badge.title = meta.error ? `${providerText} · ${meta.error}` : `${text}`;
+}
+
+async function refreshCloudBadge(metaOverride = null) {
+  try {
+    if (metaOverride) {
+      renderCloudStatus(metaOverride);
+      return;
+    }
+    const meta = await getCloudSyncMeta();
+    if (meta) {
+      renderCloudStatus(meta);
+    } else {
+      const provider = await sessionSync.getActiveProvider();
+      renderCloudStatus({ provider, status: provider === PROVIDERS.LOCAL ? "local" : "pending" });
+    }
+  } catch (error) {
+    console.warn("[editor] Failed to update cloud badge", error);
+    renderCloudStatus({ provider: PROVIDERS.LOCAL, status: "error", error: error.message });
+  }
+}
 
 // Lightweight i18n helpers (delegates to editor-i18n.js if present)
 function i18n(key, fallback) {
@@ -33,6 +133,7 @@ let API_KEY = "";
 document.addEventListener("DOMContentLoaded", () => {
   loadAPIKey();
   loadSessions();
+  refreshCloudBadge();
   setupEventListeners();
 });
 
@@ -89,37 +190,43 @@ function setupEventListeners() {
 
 async function loadSessions() {
   try {
-    const result = await chrome.storage.local.get(["sessions"]);
-    sessions = result.sessions || [];
+    const loaded = await sessionSync.loadSessions({ forceRemote: true });
+    sessions = Array.isArray(loaded) ? [...loaded] : [];
     renderSessionList();
 
     if (sessions.length > 0) {
       showSession(0);
     }
+    refreshCloudBadge();
   } catch (error) {
     console.error("Failed to load sessions:", error);
+    sessions = [];
+    renderSessionList();
   }
 }
 
 function renderSessionList() {
-  const list = document.getElementById("session-list");
-  list.innerHTML = "";
+  const list = getElement("session-list");
+  if (!list) return;
 
-  if (sessions.length === 0) {
+  if (!Array.isArray(sessions) || sessions.length === 0) {
     list.innerHTML =
       `<li style="padding: 16px; text-align: center; color: #64748b; font-size: 13px;">📋 ${i18n('no_screenshots', 'No screenshots in this session')}<br><span style="font-size: 12px; margin-top: 4px; display: block;">&nbsp;</span></li>`;
     return;
   }
 
+  const fragment = document.createDocumentFragment();
+  const locale = currentLocale();
+
   sessions.forEach((session, index) => {
     const li = document.createElement("li");
     li.className = "session-item";
+    li.dataset.index = String(index);
     if (index === currentSessionIndex) {
       li.classList.add("active");
     }
 
     const date = session?.timestamp ? new Date(session.timestamp) : new Date();
-    const locale = currentLocale();
     li.innerHTML = `
       <div style="display: flex; justify-content: space-between; align-items: center;">
         <div style="flex: 1;">
@@ -128,8 +235,8 @@ function renderSessionList() {
             ${session.captures?.length || 0} ${i18n('screenshots_word','screenshots')} • ${date.toLocaleDateString(locale)}
           </div>
         </div>
-        <button 
-          class="delete-session-btn" 
+        <button
+          class="delete-session-btn"
           data-index="${index}"
           style="
             background: #ef4444;
@@ -152,32 +259,32 @@ function renderSessionList() {
       </div>
     `;
 
-    // Session click to view
     li.addEventListener("click", (e) => {
-      // Don't trigger if clicking delete button
-      if (e.target.classList.contains('delete-session-btn')) return;
+      if (e.target.classList.contains("delete-session-btn")) return;
       showSession(index);
     });
-    
-    // Delete button handler
-    const deleteBtn = li.querySelector('.delete-session-btn');
-    deleteBtn.addEventListener('click', (e) => {
-      e.stopPropagation();
-      deleteSession(index);
-    });
-    
-    // Hover effect for delete button
-    deleteBtn.addEventListener('mouseenter', () => {
-      deleteBtn.style.transform = 'scale(1.1)';
-      deleteBtn.style.background = '#dc2626';
-    });
-    deleteBtn.addEventListener('mouseleave', () => {
-      deleteBtn.style.transform = 'scale(1)';
-      deleteBtn.style.background = '#ef4444';
-    });
-    
-    list.appendChild(li);
+
+    const deleteBtn = li.querySelector(".delete-session-btn");
+    if (deleteBtn) {
+      deleteBtn.addEventListener("click", (e) => {
+        e.stopPropagation();
+        deleteSession(index);
+      });
+
+      deleteBtn.addEventListener("mouseenter", () => {
+        deleteBtn.style.transform = "scale(1.08)";
+        deleteBtn.style.background = "#dc2626";
+      });
+      deleteBtn.addEventListener("mouseleave", () => {
+        deleteBtn.style.transform = "scale(1)";
+        deleteBtn.style.background = "#ef4444";
+      });
+    }
+
+    fragment.appendChild(li);
   });
+
+  list.replaceChildren(fragment);
 }
 
 function showSession(index) {
@@ -210,7 +317,8 @@ function showSession(index) {
   mainContent.querySelector('[data-action="export-json"]').addEventListener('click', exportToJSON);
 
   // Title edit handler
-  const titleEl = document.getElementById('session-title');
+  clearCachedElement('session-title');
+  const titleEl = getElement('session-title');
   if (titleEl) {
     titleEl.addEventListener('click', () => {
       const current = session.title || '';
@@ -228,22 +336,72 @@ function showSession(index) {
     });
   }
 
-  const grid = document.getElementById("screenshot-grid");
+  clearCachedElement("screenshot-grid");
+  renderScreenshotGrid(session);
+  // Re-apply i18n for newly rendered content
+  try { window.applyEditorI18n && window.applyEditorI18n(); } catch {}
+}
 
-  if (!session.captures || session.captures.length === 0) {
-    grid.innerHTML =
-      `<div style="grid-column: 1/-1; text-align: center; padding: 40px; color: #64748b;">${i18n('no_screenshots','No screenshots in this session')}</div>`;
+function renderScreenshotGrid(session) {
+  const grid = getElement("screenshot-grid");
+  if (!grid) return;
+
+  if (activeGridObserver) {
+    activeGridObserver.disconnect();
+    activeGridObserver = null;
+  }
+
+  const captures = Array.isArray(session.captures) ? session.captures : [];
+  if (captures.length === 0) {
+    grid.innerHTML = `<div style="grid-column: 1/-1; text-align: center; padding: 40px; color: #64748b;">${i18n('no_screenshots','No screenshots in this session')}</div>`;
     return;
   }
 
-  session.captures.forEach((capture, captureIndex) => {
-    const card = createScreenshotCard(capture, captureIndex);
-    grid.appendChild(card);
+  grid.innerHTML = "";
+  const fragment = document.createDocumentFragment();
+  const placeholders = captures.map((_, index) => {
+    const placeholder = document.createElement("div");
+    placeholder.className = "screenshot-card placeholder";
+    placeholder.dataset.index = String(index);
+    fragment.appendChild(placeholder);
+    return placeholder;
   });
 
-  setupDragAndDrop();
-  // Re-apply i18n for newly rendered content
-  try { window.applyEditorI18n && window.applyEditorI18n(); } catch {}
+  grid.appendChild(fragment);
+
+  const hydrate = (placeholder) => {
+    if (!placeholder || placeholder.dataset.hydrated === "true") return;
+    const index = Number(placeholder.dataset.index);
+    const capture = captures[index];
+    if (!capture) return;
+    const card = createScreenshotCard(capture, index);
+    placeholder.dataset.hydrated = "true";
+    placeholder.replaceWith(card);
+  };
+
+  const scheduleHydrate = (placeholder) => {
+    if (!placeholder || placeholder.dataset.hydrated === "true") return;
+    scheduleIdle(() => hydrate(placeholder));
+  };
+
+  placeholders.slice(0, Math.min(INITIAL_HYDRATE_COUNT, placeholders.length)).forEach(scheduleHydrate);
+
+  if ("IntersectionObserver" in window && placeholders.length > INITIAL_HYDRATE_COUNT) {
+    activeGridObserver = new IntersectionObserver((entries) => {
+      entries.forEach((entry) => {
+        if (entry.isIntersecting) {
+          scheduleHydrate(entry.target);
+          activeGridObserver.unobserve(entry.target);
+        }
+      });
+    }, virtualizationOptions);
+
+    placeholders.slice(INITIAL_HYDRATE_COUNT).forEach((placeholder) => {
+      activeGridObserver.observe(placeholder);
+    });
+  } else {
+    placeholders.forEach(scheduleHydrate);
+  }
 }
 
 function createScreenshotCard(capture, index) {
@@ -285,6 +443,8 @@ function createScreenshotCard(capture, index) {
   img.addEventListener('click', () => { lastActiveStepIndex = index; openImageModal(capture.dataUrl, index, false); });
   
   const textarea = card.querySelector('.description-box');
+  const debouncedUpdate = debounce((value) => updateDescription(index, value));
+  textarea.addEventListener('input', (e) => debouncedUpdate(e.target.value));
   textarea.addEventListener('change', (e) => updateDescription(index, e.target.value));
   textarea.addEventListener('focus', () => { lastActiveStepIndex = index; });
   card.addEventListener('click', () => { lastActiveStepIndex = index; });
@@ -335,18 +495,16 @@ function createScreenshotCard(capture, index) {
     });
   });
 
+  registerCardDragHandlers(card);
   return card;
 }
 
-function setupDragAndDrop() {
-  const cards = document.querySelectorAll(".screenshot-card");
-
-  cards.forEach((card) => {
-    card.addEventListener("dragstart", handleDragStart);
-    card.addEventListener("dragover", handleDragOver);
-    card.addEventListener("drop", handleDrop);
-    card.addEventListener("dragend", handleDragEnd);
-  });
+function registerCardDragHandlers(card) {
+  if (!card) return;
+  card.addEventListener("dragstart", handleDragStart);
+  card.addEventListener("dragover", handleDragOver);
+  card.addEventListener("drop", handleDrop);
+  card.addEventListener("dragend", handleDragEnd);
 }
 
 function handleDragStart(e) {
@@ -942,9 +1100,17 @@ function createNewSession() {
 
 async function saveSessions() {
   try {
-    await chrome.storage.local.set({ sessions });
+    const result = await sessionSync.saveSessions(sessions);
+    if (result && result.success === false && result.error) {
+      scheduleIdle(() => refreshCloudBadge({ provider: result.provider, status: "error", error: result.error }));
+    } else {
+      scheduleIdle(() => refreshCloudBadge());
+    }
+    return result;
   } catch (error) {
     console.error("Failed to save sessions:", error);
+    scheduleIdle(() => refreshCloudBadge({ provider: PROVIDERS.LOCAL, status: "error", error: error.message }));
+    return null;
   }
 }
 
