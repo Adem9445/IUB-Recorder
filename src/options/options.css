@@ -97,3 +97,15 @@ select {
 .mb-3 {
   margin-bottom: 1rem;
 }
+
+#cloud-status-text[data-state='pending'] {
+  color: #c7d2fe;
+}
+
+#cloud-status-text[data-state='synced'] {
+  color: #bbf7d0;
+}
+
+#cloud-status-text[data-state='error'] {
+  color: #fecaca;
+}

@@ -1,3 +1,5 @@
+import { sessionSync } from "../utils/session-sync.js";
+
 // Helper function to send messages with error handling
 function safeSendMessage(message, callback) {
   chrome.runtime.sendMessage(message, (response) => {
@@ -181,32 +183,37 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
     });
     return true;
   } else if (request.action === "saveSession") {
-    // Save session captures and open editor
-    chrome.storage.local.get(["sessions"], (result) => {
-      const sessions = result.sessions || [];
-      const sessionId = Date.now();
-      const timestamp = Date.now();
-      // Derive a sensible default title
-      const defaultTitle =
-        request.title ||
-        (request.captures && request.captures[0]?.title) ||
-        `Session ${new Date(timestamp).toLocaleString()}`;
+    (async () => {
+      try {
+        const existingSessions = await sessionSync.loadSessions({ forceRemote: true });
+        const sessions = Array.isArray(existingSessions) ? [...existingSessions] : [];
+        const sessionId = Date.now();
+        const timestamp = Date.now();
+        const defaultTitle =
+          request.title ||
+          (request.captures && request.captures[0]?.title) ||
+          `Session ${new Date(timestamp).toLocaleString()}`;
 
-      sessions.push({
-        id: sessionId,
-        title: defaultTitle,
-        timestamp,
-        captures: request.captures
-      });
-      chrome.storage.local.set({ sessions }, () => {
-        // Open the editor page to review sessions
-        chrome.tabs.create({
-          url: chrome.runtime.getURL("src/editor/editor-standalone.html")
-        }, () => {
-          sendResponse({ success: true, sessionId });
+        sessions.push({
+          id: sessionId,
+          title: defaultTitle,
+          timestamp,
+          captures: request.captures
         });
-      });
-    });
+
+        const syncResult = await sessionSync.saveSessions(sessions);
+
+        chrome.tabs.create(
+          { url: chrome.runtime.getURL("src/editor/editor-standalone.html") },
+          () => {
+            sendResponse({ success: true, sessionId, syncResult });
+          }
+        );
+      } catch (error) {
+        console.error("Failed to persist session", error);
+        sendResponse({ success: false, error: error.message });
+      }
+    })();
     return true;
   } else if (request.type === "PAGE_CLICK_BATCH") {
     // Handle batched click messages - only process the most recent one
