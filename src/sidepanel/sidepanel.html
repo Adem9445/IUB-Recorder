@@ -4,9 +4,24 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>IUB Workspace</title>
-    <link rel="icon" type="image/png" sizes="16x16" href="../../assets/icon16.png" />
-    <link rel="icon" type="image/png" sizes="48x48" href="../../assets/icon48.png" />
-    <link rel="icon" type="image/png" sizes="128x128" href="../../assets/icon128.png" />
+    <link
+      rel="icon"
+      type="image/png"
+      sizes="16x16"
+      href="../../assets/icon16.png"
+    />
+    <link
+      rel="icon"
+      type="image/png"
+      sizes="48x48"
+      href="../../assets/icon48.png"
+    />
+    <link
+      rel="icon"
+      type="image/png"
+      sizes="128x128"
+      href="../../assets/icon128.png"
+    />
     <!-- Lightweight inline animations - no external dependencies -->
     <style type="text/css">
       :root,
@@ -170,28 +185,55 @@
 
       /* Lightweight Animation Keyframes */
       @keyframes fadeIn {
-        from { opacity: 0; }
-        to { opacity: 1; }
+        from {
+          opacity: 0;
+        }
+        to {
+          opacity: 1;
+        }
       }
-      
+
       @keyframes fadeInLeft {
-        from { opacity: 0; transform: translateX(-20px); }
-        to { opacity: 1; transform: translateX(0); }
+        from {
+          opacity: 0;
+          transform: translateX(-20px);
+        }
+        to {
+          opacity: 1;
+          transform: translateX(0);
+        }
       }
-      
+
       @keyframes fadeInRight {
-        from { opacity: 0; transform: translateX(20px); }
-        to { opacity: 1; transform: translateX(0); }
+        from {
+          opacity: 0;
+          transform: translateX(20px);
+        }
+        to {
+          opacity: 1;
+          transform: translateX(0);
+        }
       }
-      
+
       @keyframes fadeInUp {
-        from { opacity: 0; transform: translateY(20px); }
-        to { opacity: 1; transform: translateY(0); }
+        from {
+          opacity: 0;
+          transform: translateY(20px);
+        }
+        to {
+          opacity: 1;
+          transform: translateY(0);
+        }
       }
-      
+
       @keyframes pulse {
-        0%, 100% { opacity: 1; }
-        50% { opacity: 0.7; }
+        0%,
+        100% {
+          opacity: 1;
+        }
+        50% {
+          opacity: 0.7;
+        }
       }
 
       /* Custom Styles */
@@ -461,7 +503,11 @@
       }
 
       .toggle-switch input:checked + .toggle-slider {
-        background: linear-gradient(135deg, var(--gradient-start) 0%, var(--gradient-end) 100%);
+        background: linear-gradient(
+          135deg,
+          var(--gradient-start) 0%,
+          var(--gradient-end) 100%
+        );
       }
 
       .toggle-switch input:checked + .toggle-slider::before {
@@ -469,7 +515,9 @@
       }
 
       .toggle-switch:hover .toggle-slider {
-        box-shadow: inset 0 2px 6px rgba(0, 0, 0, 0.15), 0 0 0 3px rgba(102, 126, 234, 0.1);
+        box-shadow:
+          inset 0 2px 6px rgba(0, 0, 0, 0.15),
+          0 0 0 3px rgba(102, 126, 234, 0.1);
       }
 
       /* Settings button hover effect */
@@ -484,106 +532,230 @@
 
       /* Toast animations */
       @keyframes slideUp {
-        from { transform: translateX(-50%) translateY(20px); opacity: 0; }
-        to { transform: translateX(-50%) translateY(0); opacity: 1; }
+        from {
+          transform: translateX(-50%) translateY(20px);
+          opacity: 0;
+        }
+        to {
+          transform: translateX(-50%) translateY(0);
+          opacity: 1;
+        }
       }
-      
+
       @keyframes slideDown {
-        from { transform: translateX(-50%) translateY(0); opacity: 1; }
-        to { transform: translateX(-50%) translateY(20px); opacity: 0; }
+        from {
+          transform: translateX(-50%) translateY(0);
+          opacity: 1;
+        }
+        to {
+          transform: translateX(-50%) translateY(20px);
+          opacity: 0;
+        }
       }
-      
+
       @keyframes fadeOut {
-        from { opacity: 1; }
-        to { opacity: 0; }
+        from {
+          opacity: 1;
+        }
+        to {
+          opacity: 0;
+        }
       }
     </style>
   </head>
   <body>
-    <div id="sidepanel-home-root" style="animation: fadeIn 0.8s ease-in-out;">
+    <div id="sidepanel-home-root" style="animation: fadeIn 0.8s ease-in-out">
       <!-- Header with Settings Button -->
-      <div style="
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        margin-bottom: 16px;
-        padding-bottom: 12px;
-        border-bottom: 2px solid rgba(102, 126, 234, 0.2);
-        animation: fadeInUp 0.4s ease-in-out;
-      ">
-        <h3 style="
-          margin: 0;
-          font-size: 18px;
-          font-weight: 700;
-          color: #1e293b;
-          background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-          -webkit-background-clip: text;
-          -webkit-text-fill-color: transparent;
-          background-clip: text;
-          "> 
+      <div
+        style="
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+          margin-bottom: 16px;
+          padding-bottom: 12px;
+          border-bottom: 2px solid rgba(102, 126, 234, 0.2);
+          animation: fadeInUp 0.4s ease-in-out;
+        "
+      >
+        <h3
+          style="
+            margin: 0;
+            font-size: 18px;
+            font-weight: 700;
+            color: #1e293b;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+          "
+        >
           📸 IUB
         </h3>
-        <div class="icon-toolbar" style="display:flex; gap:8px; align-items:center;">
-          <button id="menu-btn" class="icon-btn" title="Meny" style="
-            width: 36px; height: 36px; border-radius: 50%;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color:white; display:flex; align-items:center; justify-content:center;
-            box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
-          ">⚙️</button>
-          <button id="toggle-click-indicator-btn" class="icon-btn" title="Vis klikk-indikator" aria-pressed="true" style="
-            width: 36px; height: 36px; border-radius: 50%;
-            background: #f1f5f9; color:#0f172a; display:flex; align-items:center; justify-content:center;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
-          ">🎯</button>
-          <button id="open-workspace" class="icon-btn" title="Open Workspace" style="
-            width: 36px; height: 36px; border-radius: 50%;
-            background: #f8fafc; color:#0f172a; display:flex; align-items:center; justify-content:center;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
-          ">🏠</button>
-          <button id="open-privacy" class="icon-btn" title="Personvernerklæring" style="
-            width: 36px; height: 36px; border-radius: 50%;
-            background: #f8fafc; color:#0f172a; display:flex; align-items:center; justify-content:center;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
-          ">🔒</button>
-          <button id="donate-btn" class="icon-btn" title="Doner til videre utvikling" style="
-            width: 36px; height: 36px; border-radius: 50%;
-            background: #fee2e2; color:#b91c1c; display:flex; align-items:center; justify-content:center;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
-          ">❤️</button>
+        <div
+          class="icon-toolbar"
+          style="display: flex; gap: 8px; align-items: center"
+        >
+          <button
+            id="menu-btn"
+            class="icon-btn"
+            title="Meny"
+            style="
+              width: 36px;
+              height: 36px;
+              border-radius: 50%;
+              background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+              color: white;
+              display: flex;
+              align-items: center;
+              justify-content: center;
+              box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+            "
+          >
+            ⚙️
+          </button>
+          <button
+            id="toggle-click-indicator-btn"
+            class="icon-btn"
+            title="Vis klikk-indikator"
+            aria-pressed="true"
+            style="
+              width: 36px;
+              height: 36px;
+              border-radius: 50%;
+              background: #f1f5f9;
+              color: #0f172a;
+              display: flex;
+              align-items: center;
+              justify-content: center;
+              box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+            "
+          >
+            🎯
+          </button>
+          <button
+            id="open-workspace"
+            class="icon-btn"
+            title="Open Workspace"
+            style="
+              width: 36px;
+              height: 36px;
+              border-radius: 50%;
+              background: #f8fafc;
+              color: #0f172a;
+              display: flex;
+              align-items: center;
+              justify-content: center;
+              box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+            "
+          >
+            🏠
+          </button>
+          <button
+            id="open-privacy"
+            class="icon-btn"
+            title="Personvernerklæring"
+            style="
+              width: 36px;
+              height: 36px;
+              border-radius: 50%;
+              background: #f8fafc;
+              color: #0f172a;
+              display: flex;
+              align-items: center;
+              justify-content: center;
+              box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+            "
+          >
+            🔒
+          </button>
+          <button
+            id="open-terms"
+            class="icon-btn"
+            title="Terms of service"
+            style="
+              width: 36px;
+              height: 36px;
+              border-radius: 50%;
+              background: #f8fafc;
+              color: #0f172a;
+              display: flex;
+              align-items: center;
+              justify-content: center;
+              box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+            "
+          >
+            📜
+          </button>
+          <button
+            id="donate-btn"
+            class="icon-btn"
+            title="Doner til videre utvikling"
+            style="
+              width: 36px;
+              height: 36px;
+              border-radius: 50%;
+              background: #fee2e2;
+              color: #b91c1c;
+              display: flex;
+              align-items: center;
+              justify-content: center;
+              box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+            "
+          >
+            ❤️
+          </button>
         </div>
       </div>
 
       <!-- API Key Info banner removed; replaced by compact info icon in header -->
 
       <!-- Hidden checkbox to preserve existing JS logic; controlled by icon button -->
-      <div style="display:none;">
-        <input type="checkbox" id="show-click-indicator" checked>
+      <div style="display: none">
+        <input type="checkbox" id="show-click-indicator" checked />
       </div>
 
       <!-- Big Open Workspace button removed; use icon in header -->
       <button
         id="start-recording"
-        style="animation: fadeInRight 0.8s ease-in-out;"
+        style="animation: fadeInRight 0.8s ease-in-out"
       >
         <span>🎬</span> Start Recording
       </button>
       <button
         id="stop-recording"
         hidden
-        style="animation: pulse 1.5s ease-in-out infinite;"
+        style="animation: pulse 1.5s ease-in-out infinite"
       >
         <span>⏹️</span> Stop Recording
       </button>
       <div id="chat-container"></div>
       <!-- Hidden PayPal Donate Form -->
-      <div style="display:none;">
-        <form id="donate-form" action="https://www.paypal.com/donate" method="post" target="_blank">
+      <div style="display: none">
+        <form
+          id="donate-form"
+          action="https://www.paypal.com/donate"
+          method="post"
+          target="_blank"
+        >
           <input type="hidden" name="business" value="4CYARW24XNSSG" />
           <input type="hidden" name="no_recurring" value="0" />
           <input type="hidden" name="item_name" value="Videre utvikling IUB" />
           <input type="hidden" name="currency_code" value="NOK" />
-          <input type="image" src="https://www.paypalobjects.com/no_NO/i/btn/btn_donate_LG.gif" border="0" name="submit" title="PayPal - The safer, easier way to pay online!" alt="Doner med PayPal-knappen" />
-          <img alt="" border="0" src="https://www.paypal.com/no_NO/i/scr/pixel.gif" width="1" height="1" />
+          <input
+            type="image"
+            src="https://www.paypalobjects.com/no_NO/i/btn/btn_donate_LG.gif"
+            border="0"
+            name="submit"
+            title="PayPal - The safer, easier way to pay online!"
+            alt="Doner med PayPal-knappen"
+          />
+          <img
+            alt=""
+            border="0"
+            src="https://www.paypal.com/no_NO/i/scr/pixel.gif"
+            width="1"
+            height="1"
+          />
         </form>
       </div>
     </div>
