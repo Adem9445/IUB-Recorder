@@ -72,6 +72,7 @@
         "https://chat.openai.com/*",
         "https://gemini.google.com/*",
         "https://www.deepseek.com/*",
+        "https://deepseek.com/*",
         "https://chat.deepseek.com/*",
         "https://copilot.microsoft.com/*",
         "https://www.bing.com/chat*",
