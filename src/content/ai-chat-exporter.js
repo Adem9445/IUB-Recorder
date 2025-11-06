@@ -773,7 +773,7 @@
    */
   function extractChatContent(platform, settings) {
     let messages = [];
-    let title = "AI Chat Export";
+    let title = document.title?.trim() || "AI Chat Export";
 
     switch (platform) {
       case "chatgpt":
