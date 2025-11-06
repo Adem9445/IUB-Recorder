@@ -69,15 +69,23 @@ document.addEventListener("DOMContentLoaded", () => {
     });
   }
 
+  /**
+   * Updates the contextual helper text for the selected cloud provider.
+   * @param {string} provider
+   */
   function updateCloudHint(provider) {
     if (!cloudStatusHint) return;
     if (provider === "local") {
-      cloudStatusHint.textContent = "Konfigurer skysynk under for å unngå at lokal lagring blir full.";
+      cloudStatusHint.textContent =
+        "Konfigurer skysynk under for å unngå at lokal lagring blir full.";
     } else {
       cloudStatusHint.textContent = `Sessions blir synkronisert til ${providerLabels[provider] || provider}.`;
     }
   }
 
+  /**
+   * Toggles visibility of provider-specific configuration fields.
+   */
   function updateCloudFields() {
     if (!storageProviderSelect) return;
     const provider = storageProviderSelect.value || "local";
@@ -104,15 +112,20 @@ document.addEventListener("DOMContentLoaded", () => {
     updateCloudHint(provider);
   }
 
+  /**
+   * Retrieves sync metadata to inform the user about cloud status.
+   */
   function refreshCloudStatus() {
     chrome.storage.sync.get(["cloudStorageSettings"], (syncResult) => {
       chrome.storage.local.get(["cloudStorageMeta"], (localResult) => {
-        const settings = syncResult.cloudStorageSettings || defaultCloudSettings;
+        const settings =
+          syncResult.cloudStorageSettings || defaultCloudSettings;
         const meta = localResult.cloudStorageMeta || {};
         const provider = settings.provider || "local";
         if (cloudStatusText) {
           let text = providerLabels[provider] || provider;
-          const status = meta.status || (provider === "local" ? "local" : "pending");
+          const status =
+            meta.status || (provider === "local" ? "local" : "pending");
           if (status === "synced") {
             text += " · Synkronisert";
           } else if (status === "cached") {
@@ -144,7 +157,7 @@ document.addEventListener("DOMContentLoaded", () => {
   initializeStorageDisplay(refreshCloudStatus);
   initializeAIStatus();
   initializeClickIndicatorToggle();
-  
+
   // Load saved options
   loadOptions();
 
@@ -175,7 +188,11 @@ document.addEventListener("DOMContentLoaded", () => {
     const apiKey = form.elements["api_key"].value;
 
     for (const [key, value] of formData.entries()) {
-      if (key === "api_key" || key === "storage_provider" || key.startsWith("cloud_")) {
+      if (
+        key === "api_key" ||
+        key === "storage_provider" ||
+        key.startsWith("cloud_")
+      ) {
         continue;
       }
       if (form.elements[key]?.type === "checkbox") {
@@ -195,8 +212,11 @@ document.addEventListener("DOMContentLoaded", () => {
       options[input.name] = Number(input.value) || 100;
     });
 
-    const provider = storageProviderSelect ? storageProviderSelect.value : "local";
-    let fileName = cloudFileNameInput?.value?.trim() || defaultCloudSettings.fileName;
+    const provider = storageProviderSelect
+      ? storageProviderSelect.value
+      : "local";
+    let fileName =
+      cloudFileNameInput?.value?.trim() || defaultCloudSettings.fileName;
     if (fileName && !fileName.toLowerCase().endsWith(".json")) {
       fileName = `${fileName}.json`;
     }
@@ -204,8 +224,10 @@ document.addEventListener("DOMContentLoaded", () => {
     const cloudSettings = {
       provider,
       fileName,
-      dropboxPath: dropboxPathInput?.value?.trim() || defaultCloudSettings.dropboxPath,
-      oneDrivePath: oneDrivePathInput?.value?.trim() || defaultCloudSettings.oneDrivePath,
+      dropboxPath:
+        dropboxPathInput?.value?.trim() || defaultCloudSettings.dropboxPath,
+      oneDrivePath:
+        oneDrivePathInput?.value?.trim() || defaultCloudSettings.oneDrivePath,
       googleDriveFolderId: gdriveFolderInput?.value?.trim() || "",
       googleDriveFileId: gdriveFileInput?.value?.trim() || ""
     };
@@ -222,7 +244,10 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 
     await chrome.storage.local.set({ cloudStorageTokens: cloudTokens });
-    await chrome.storage.sync.set({ exportOptions: options, cloudStorageSettings: cloudSettings });
+    await chrome.storage.sync.set({
+      exportOptions: options,
+      cloudStorageSettings: cloudSettings
+    });
     showStatus("Saved");
     refreshCloudStatus();
   });
@@ -236,45 +261,54 @@ document.addEventListener("DOMContentLoaded", () => {
 
   function loadOptions() {
     // Load export options from sync storage
-    chrome.storage.sync.get(["exportOptions", "cloudStorageSettings"], (result) => {
-      const options = result.exportOptions || getDefaults();
-      for (const [key, value] of Object.entries(options)) {
-        const el = form.elements[key];
-        if (el) {
-          if (el.type === "checkbox") {
-            el.checked = value;
-          } else {
-            el.value = value;
+    chrome.storage.sync.get(
+      ["exportOptions", "cloudStorageSettings"],
+      (result) => {
+        const options = result.exportOptions || getDefaults();
+        for (const [key, value] of Object.entries(options)) {
+          const el = form.elements[key];
+          if (el) {
+            if (el.type === "checkbox") {
+              el.checked = value;
+            } else {
+              el.value = value;
+            }
           }
         }
-      }
-      // Trigger change events to show/hide sub-options
-      marginsSelect.dispatchEvent(new Event("change"));
-      qColorSelect.dispatchEvent(new Event("change"));
-      qFgColorSelect.dispatchEvent(new Event("change"));
+        // Trigger change events to show/hide sub-options
+        marginsSelect.dispatchEvent(new Event("change"));
+        qColorSelect.dispatchEvent(new Event("change"));
+        qFgColorSelect.dispatchEvent(new Event("change"));
 
-      const cloudSettings = { ...defaultCloudSettings, ...(result.cloudStorageSettings || {}) };
-      if (storageProviderSelect) {
-        storageProviderSelect.value = cloudSettings.provider || "local";
+        const cloudSettings = {
+          ...defaultCloudSettings,
+          ...(result.cloudStorageSettings || {})
+        };
+        if (storageProviderSelect) {
+          storageProviderSelect.value = cloudSettings.provider || "local";
+        }
+        if (cloudFileNameInput) {
+          cloudFileNameInput.value =
+            cloudSettings.fileName || defaultCloudSettings.fileName;
+        }
+        if (dropboxPathInput) {
+          dropboxPathInput.value =
+            cloudSettings.dropboxPath || defaultCloudSettings.dropboxPath;
+        }
+        if (oneDrivePathInput) {
+          oneDrivePathInput.value =
+            cloudSettings.oneDrivePath || defaultCloudSettings.oneDrivePath;
+        }
+        if (gdriveFolderInput) {
+          gdriveFolderInput.value = cloudSettings.googleDriveFolderId || "";
+        }
+        if (gdriveFileInput) {
+          gdriveFileInput.value = cloudSettings.googleDriveFileId || "";
+        }
+        updateCloudFields();
+        refreshCloudStatus();
       }
-      if (cloudFileNameInput) {
-        cloudFileNameInput.value = cloudSettings.fileName || defaultCloudSettings.fileName;
-      }
-      if (dropboxPathInput) {
-        dropboxPathInput.value = cloudSettings.dropboxPath || defaultCloudSettings.dropboxPath;
-      }
-      if (oneDrivePathInput) {
-        oneDrivePathInput.value = cloudSettings.oneDrivePath || defaultCloudSettings.oneDrivePath;
-      }
-      if (gdriveFolderInput) {
-        gdriveFolderInput.value = cloudSettings.googleDriveFolderId || "";
-      }
-      if (gdriveFileInput) {
-        gdriveFileInput.value = cloudSettings.googleDriveFileId || "";
-      }
-      updateCloudFields();
-      refreshCloudStatus();
-    });
+    );
 
     // Load API key from local storage
     chrome.storage.local.get(["apiKey", "cloudStorageTokens"], (result) => {
@@ -282,9 +316,12 @@ document.addEventListener("DOMContentLoaded", () => {
         form.elements["api_key"].value = result.apiKey;
       }
       const tokens = result.cloudStorageTokens || {};
-      if (dropboxTokenInput) dropboxTokenInput.value = tokens.dropboxToken || "";
-      if (oneDriveTokenInput) oneDriveTokenInput.value = tokens.oneDriveToken || "";
-      if (gdriveTokenInput) gdriveTokenInput.value = tokens.googleDriveToken || "";
+      if (dropboxTokenInput)
+        dropboxTokenInput.value = tokens.dropboxToken || "";
+      if (oneDriveTokenInput)
+        oneDriveTokenInput.value = tokens.oneDriveToken || "";
+      if (gdriveTokenInput)
+        gdriveTokenInput.value = tokens.googleDriveToken || "";
     });
   }
 
@@ -327,19 +364,20 @@ document.addEventListener("DOMContentLoaded", () => {
         const quota = 10; // Chrome extensions have 10MB quota
         const percentUsed = ((bytes / (quota * 1024 * 1024)) * 100).toFixed(1);
         const freeMB = (quota - mb).toFixed(2);
-        
-        document.getElementById('storage-used').textContent = `${mb} MB (${percentUsed}%)`;
-        document.getElementById('storage-free').textContent = `${freeMB} MB`;
-        document.getElementById('storage-bar').style.width = `${percentUsed}%`;
-        
+
+        document.getElementById("storage-used").textContent =
+          `${mb} MB (${percentUsed}%)`;
+        document.getElementById("storage-free").textContent = `${freeMB} MB`;
+        document.getElementById("storage-bar").style.width = `${percentUsed}%`;
+
         // Change color based on usage
-        const bar = document.getElementById('storage-bar');
+        const bar = document.getElementById("storage-bar");
         if (percentUsed > 90) {
-          bar.style.background = '#ef4444'; // Red
+          bar.style.background = "#ef4444"; // Red
         } else if (percentUsed > 70) {
-          bar.style.background = '#f59e0b'; // Orange
+          bar.style.background = "#f59e0b"; // Orange
         } else {
-          bar.style.background = 'white'; // White
+          bar.style.background = "white"; // White
         }
       });
     }
@@ -350,59 +388,61 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 
     // Delete all sessions button
-    const deleteBtn = document.getElementById('delete-all-sessions-btn');
+    const deleteBtn = document.getElementById("delete-all-sessions-btn");
     if (deleteBtn) {
-      deleteBtn.addEventListener('click', async () => {
+      deleteBtn.addEventListener("click", async () => {
         const confirm = window.confirm(
-          'Vil du slette ALLE lagrede sessions?\n\n' +
-          'Dette vil frigjøre plass men kan ikke angres!'
+          "Vil du slette ALLE lagrede sessions?\n\n" +
+            "Dette vil frigjøre plass men kan ikke angres!"
         );
-        
+
         if (!confirm) return;
-        
+
         try {
-          await chrome.storage.local.remove(['sessions', 'captures']);
-          showStatus('✅ Alle sessions slettet!');
+          await chrome.storage.local.remove(["sessions", "captures"]);
+          showStatus("✅ Alle sessions slettet!");
           updateDisplay(); // Refresh storage display
           if (typeof onMetaUpdate === "function") {
             onMetaUpdate();
           }
         } catch (error) {
-          console.error('Failed to delete sessions:', error);
-          showStatus('❌ Feil ved sletting');
+          console.error("Failed to delete sessions:", error);
+          showStatus("❌ Feil ved sletting");
         }
       });
-      
+
       // Hover effect
-      deleteBtn.addEventListener('mouseenter', () => {
-        deleteBtn.style.background = 'rgba(239, 68, 68, 0.9)';
-        deleteBtn.style.transform = 'scale(1.02)';
+      deleteBtn.addEventListener("mouseenter", () => {
+        deleteBtn.style.background = "rgba(239, 68, 68, 0.9)";
+        deleteBtn.style.transform = "scale(1.02)";
       });
-      deleteBtn.addEventListener('mouseleave', () => {
-        deleteBtn.style.background = 'rgba(255, 255, 255, 0.2)';
-        deleteBtn.style.transform = 'scale(1)';
+      deleteBtn.addEventListener("mouseleave", () => {
+        deleteBtn.style.background = "rgba(255, 255, 255, 0.2)";
+        deleteBtn.style.transform = "scale(1)";
       });
     }
   }
 
   // Initialize AI status
   function initializeAIStatus() {
-    chrome.storage.local.get(['apiKey'], (result) => {
-      const statusText = document.getElementById('ai-status-text');
-      const card = document.getElementById('ai-status-card');
-      
-      if (result.apiKey && result.apiKey.trim() !== '') {
-        statusText.innerHTML = '✅ Aktivert';
-        card.style.background = 'linear-gradient(135deg, #10b981 0%, #059669 100%)';
+    chrome.storage.local.get(["apiKey"], (result) => {
+      const statusText = document.getElementById("ai-status-text");
+      const card = document.getElementById("ai-status-card");
+
+      if (result.apiKey && result.apiKey.trim() !== "") {
+        statusText.innerHTML = "✅ Aktivert";
+        card.style.background =
+          "linear-gradient(135deg, #10b981 0%, #059669 100%)";
       } else {
-        statusText.innerHTML = '❌ Ikke konfigurert';
-        card.style.background = 'linear-gradient(135deg, #ef4444 0%, #dc2626 100%)';
+        statusText.innerHTML = "❌ Ikke konfigurert";
+        card.style.background =
+          "linear-gradient(135deg, #ef4444 0%, #dc2626 100%)";
       }
     });
-    
+
     // Listen for changes
     chrome.storage.onChanged.addListener((changes, namespace) => {
-      if (namespace === 'local' && changes.apiKey) {
+      if (namespace === "local" && changes.apiKey) {
         initializeAIStatus(); // Re-check
       }
     });
@@ -410,17 +450,21 @@ document.addEventListener("DOMContentLoaded", () => {
 
   // Initialize click indicator toggle
   function initializeClickIndicatorToggle() {
-    const toggle = document.getElementById('show-click-indicator-option');
-    
+    const toggle = document.getElementById("show-click-indicator-option");
+
     // Load current setting
-    chrome.storage.local.get(['showClickIndicator'], (result) => {
+    chrome.storage.local.get(["showClickIndicator"], (result) => {
       toggle.checked = result.showClickIndicator !== false; // Default to true
     });
-    
+
     // Save on change
-    toggle.addEventListener('change', (e) => {
+    toggle.addEventListener("change", (e) => {
       chrome.storage.local.set({ showClickIndicator: e.target.checked });
-      showStatus(e.target.checked ? 'Klikk-indikator aktivert' : 'Klikk-indikator deaktivert');
+      showStatus(
+        e.target.checked
+          ? "Klikk-indikator aktivert"
+          : "Klikk-indikator deaktivert"
+      );
     });
   }
 });

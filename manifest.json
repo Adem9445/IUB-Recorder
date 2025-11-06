@@ -5,6 +5,7 @@
   "version_name": "3.0.1 - Standalone Edition (CSP Fixed)",
   "description": "__MSG_extensionDescription__",
   "default_locale": "en",
+  "minimum_chrome_version": "116",
   "icons": {
     "16": "assets/icon16.png",
     "48": "assets/icon48.png",
@@ -73,7 +74,10 @@
         "https://www.deepseek.com/*",
         "https://chat.deepseek.com/*",
         "https://copilot.microsoft.com/*",
-        "https://www.bing.com/chat*"
+        "https://www.bing.com/chat*",
+        "https://www.perplexity.ai/*",
+        "https://claude.ai/*",
+        "https://www.x.ai/*"
       ],
       "js": ["src/content/ai-chat-exporter.js"],
       "run_at": "document_end"
@@ -87,6 +91,9 @@
     "https://www.deepseek.com/*",
     "https://copilot.microsoft.com/*",
     "https://www.bing.com/*",
+    "https://www.perplexity.ai/*",
+    "https://claude.ai/*",
+    "https://www.x.ai/*",
     "<all_urls>"
   ],
   "web_accessible_resources": [
