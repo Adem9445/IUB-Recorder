@@ -42,7 +42,7 @@
       md_user: "User",
       md_ai: "AI Assistant",
       md_code_removed: "[Code block removed]",
-      md_exported_with: "Exported with IUB Recorder v3.0.1",
+      md_exported_with: "Exported with IUB v3.0.0",
       export_button_tooltip: "Export conversation",
       settings_tooltip: "Open export settings"
     },
@@ -78,7 +78,7 @@
       md_user: "Bruker",
       md_ai: "AI Assistent",
       md_code_removed: "[Kodeblokk fjernet]",
-      md_exported_with: "Eksportert med IUB Recorder v3.0.1",
+      md_exported_with: "Eksportert med IUB v3.0.0",
       export_button_tooltip: "Eksporter samtale",
       settings_tooltip: "Åpne eksportinnstillinger"
     }
@@ -123,7 +123,7 @@
     },
     {
       id: "perplexity",
-      hosts: ["perplexity.ai", "www.perplexity.ai", "labs.perplexity.ai"],
+      hosts: ["perplexity.ai", "www.perplexity.ai"],
       containerSelectors: [
         "header",
         "nav",
@@ -145,27 +145,6 @@
       id: "grok",
       hosts: ["x.ai", "www.x.ai"],
       containerSelectors: ["header", "nav", '[data-testid*="header"]']
-    },
-    {
-      id: "meta",
-      hosts: ["meta.ai", "www.meta.ai"],
-      containerSelectors: [
-        "header",
-        "nav",
-        '[data-testid*="header" i]',
-        '[class*="header" i]'
-      ]
-    },
-    {
-      id: "pi",
-      hosts: ["pi.ai", "app.pi.ai"],
-      containerSelectors: [
-        "header",
-        "nav",
-        '[data-testid*="header" i]',
-        '[class*="top" i]',
-        '[class*="header" i]'
-      ]
     }
   ];
   let __lang = "en";
@@ -924,89 +903,6 @@
               roleAttr.includes("user") ||
               msg.classList.contains("user") ||
               msg.querySelector('[data-testid*="user"]');
-            const role = isUser ? "user" : "assistant";
-            const content = msg.textContent?.trim() || "";
-            const timestamp = new Date().toISOString();
-            if (content) {
-              messages.push({ role, content, timestamp });
-            }
-          });
-        break;
-
-      case "meta":
-        title =
-          document
-            .querySelector(
-              "header h1, [data-testid*='thread-title'], [class*='title' i]"
-            )
-            ?.textContent?.trim() ||
-          title ||
-          "Meta AI Conversation";
-        document
-          .querySelectorAll(
-            '[data-testid*="message" i], [class*="message" i], [class*="bubble" i]'
-          )
-          .forEach((msg) => {
-            const dataset = (
-              msg.getAttribute("data-testid") || ""
-            ).toLowerCase();
-            const roleAttr = (
-              msg.getAttribute("data-author") ||
-              msg.getAttribute("data-sender") ||
-              msg.getAttribute("data-actor") ||
-              ""
-            ).toLowerCase();
-            const classAttr = (msg.className || "").toString().toLowerCase();
-            const isUser =
-              dataset.includes("user") ||
-              dataset.includes("outgoing") ||
-              roleAttr.includes("user") ||
-              roleAttr.includes("self") ||
-              classAttr.includes("outgoing") ||
-              classAttr.includes("me") ||
-              msg.querySelector('[data-testid*="user-avatar" i]');
-            const role = isUser ? "user" : "assistant";
-            const content = msg.textContent?.trim() || "";
-            const timestamp = new Date().toISOString();
-            if (content) {
-              messages.push({ role, content, timestamp });
-            }
-          });
-        break;
-
-      case "pi":
-        title =
-          document
-            .querySelector(
-              "header h1, [data-testid*='title'], [class*='title' i]"
-            )
-            ?.textContent?.trim() ||
-          title ||
-          "Pi Conversation";
-        document
-          .querySelectorAll(
-            '[data-testid*="message" i], [class*="message" i], [class*="bubble" i]'
-          )
-          .forEach((msg) => {
-            const dataset = (
-              msg.getAttribute("data-testid") || ""
-            ).toLowerCase();
-            const roleAttr = (
-              msg.getAttribute("data-author") ||
-              msg.getAttribute("data-role") ||
-              msg.getAttribute("data-participant") ||
-              ""
-            ).toLowerCase();
-            const classAttr = (msg.className || "").toString().toLowerCase();
-            const isUser =
-              dataset.includes("user") ||
-              dataset.includes("self") ||
-              dataset.includes("sender-me") ||
-              roleAttr.includes("user") ||
-              roleAttr.includes("owner") ||
-              classAttr.includes("user") ||
-              classAttr.includes("outgoing") ||
-              msg.querySelector('[data-testid*="user-avatar" i]');
             const role = isUser ? "user" : "assistant";
             const content = msg.textContent?.trim() || "";
             const timestamp = new Date().toISOString();

@@ -78,14 +78,9 @@
         "https://www.bing.com/chat*",
         "https://perplexity.ai/*",
         "https://www.perplexity.ai/*",
-        "https://labs.perplexity.ai/*",
         "https://claude.ai/*",
         "https://x.ai/*",
-        "https://www.x.ai/*",
-        "https://meta.ai/*",
-        "https://www.meta.ai/*",
-        "https://pi.ai/*",
-        "https://app.pi.ai/*"
+        "https://www.x.ai/*"
       ],
       "js": ["src/content/ai-chat-exporter.js"],
       "run_at": "document_end"
@@ -97,20 +92,14 @@
     "https://chat.openai.com/*",
     "https://gemini.google.com/*",
     "https://www.deepseek.com/*",
-    "https://deepseek.com/*",
     "https://chat.deepseek.com/*",
     "https://copilot.microsoft.com/*",
     "https://www.bing.com/*",
     "https://perplexity.ai/*",
     "https://www.perplexity.ai/*",
-    "https://labs.perplexity.ai/*",
     "https://claude.ai/*",
     "https://x.ai/*",
-    "https://www.x.ai/*",
-    "https://meta.ai/*",
-    "https://www.meta.ai/*",
-    "https://pi.ai/*",
-    "https://app.pi.ai/*"
+    "https://www.x.ai/*"
   ],
   "web_accessible_resources": [
     {
