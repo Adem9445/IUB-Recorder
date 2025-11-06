@@ -13,6 +13,7 @@ Ultra-modern AI-powered screen capture and documentation platform with full-page
 ## ✨ Features
 
 ### 📸 **Advanced Screenshot Capture**
+
 - **Full-Page Capture** - Smart stitching algorithm for entire scrollable pages
 - **Click-based Recording** - Automatic screenshot on element click
 - **Visible Area Capture** - Quick screenshots of current viewport
@@ -20,6 +21,7 @@ Ultra-modern AI-powered screen capture and documentation platform with full-page
 - **Progress Indicators** - Visual feedback during capture
 
 ### 🔒 **Privacy & Security**
+
 - **Auto-blur Sensitive Data** - Automatically detects and blurs:
   - Credit card numbers
   - Email addresses
@@ -31,6 +33,7 @@ Ultra-modern AI-powered screen capture and documentation platform with full-page
 - **Privacy Mode Toggle** - Enable/disable in settings
 
 ### 🎬 **Screen Recording**
+
 - **HD Video Recording** - Up to 1920x1080 @ 30fps
 - **Audio Support** - Optional audio recording
 - **Multiple Sources** - Tab, window, or full screen
@@ -38,29 +41,34 @@ Ultra-modern AI-powered screen capture and documentation platform with full-page
 - **WebM Export** - Efficient video format
 
 ### ⌨️ **Keyboard Shortcuts**
+
 - **Alt+Shift+P** - Capture full page screenshot
 - **Alt+Shift+V** - Capture visible area
 - **Alt+Shift+R** - Start/Stop recording
 - **Ctrl+Shift+E** - Open editor (Cmd+Shift+E on Mac)
 
 ### 🎨 **Professional Editing**
+
 - **TUI Image Editor** - 12+ professional tools
 - **Zoom Controls** - 50%-300% zoom with smooth animations
 - **Full Screen Mode** - View screenshots in fullscreen
 - **Quick Actions** - Save, Copy, Share, Delete
 
 ### 📄 **Beautiful PDF Export**
+
 - **Modern Cover Page** - Gradient design with metadata
 - **Table of Contents** - Auto-generated with page numbers
 - **Styled Step Pages** - Professional typography and layout
 - **High Quality** - 98% JPEG quality, 2x scale
 
 ### 🤖 **AI Features**
-- **AI Chat Export** - Export conversations from ChatGPT, Google Gemini, DeepSeek, Microsoft Copilot
+
+- **AI Chat Export** - Export conversations from ChatGPT, Google Gemini, DeepSeek, Microsoft Copilot, Perplexity (Labs too), Claude, Grok, Meta AI, and Pi
 - **Auto-generate Descriptions** - AI-powered step descriptions
 - **Smart Suggestions** - Context-aware recommendations
 
 ### 🌐 **Multi-language Support**
+
 - **English** - Full translation
 - **Norwegian (Norsk)** - Complete translation
 - **Extensible** - Easy to add more languages
@@ -72,12 +80,14 @@ Ultra-modern AI-powered screen capture and documentation platform with full-page
 ### From Source
 
 1. Clone this repository:
+
    ```bash
    git clone https://github.com/yourusername/iub-recorder.git
    cd iub-recorder
    ```
 
 2. Install dependencies (optional, for development):
+
    ```bash
    npm install
    ```
@@ -201,16 +211,19 @@ The extension requires the following permissions:
 ## 🐛 Troubleshooting
 
 ### Screenshots not capturing
+
 - Ensure you've granted all required permissions
 - Chrome:// pages cannot be captured (browser limitation)
 - Try refreshing the page and restarting the recording
 
 ### AI features not working
+
 - Verify your API key is correctly set in Options
 - Check your OpenAI account has available credits
 - Check browser console for error messages
 
 ### Extension not loading
+
 - Ensure all files are present in the directory
 - Check for JavaScript errors in `chrome://extensions/`
 - Try reloading the extension
@@ -232,6 +245,7 @@ Contributions are welcome! Please feel free to submit a Pull Request.
 ## 📞 Support
 
 For issues or questions:
+
 - Open an issue on GitHub
 - Check the [troubleshooting section](#-troubleshooting)
 - Review browser console for errors
@@ -241,11 +255,13 @@ For issues or questions:
 ## 📝 Version History
 
 ### v3.0.1 - Standalone Edition (CSP Fixed)
+
 - Content Security Policy fixes
 - Improved stability
 - Bug fixes
 
 ### v3.0.0 - Modern Edition + UX Update
+
 - One-click access with sidepanel
 - Ultra-modern design with gradients
 - Glassmorphism effects

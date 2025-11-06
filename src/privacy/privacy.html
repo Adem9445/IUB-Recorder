@@ -4,73 +4,246 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>IUB – Personvernerklæring</title>
-    <link rel="icon" type="image/png" sizes="16x16" href="../../assets/icon16.png" />
-    <link rel="icon" type="image/png" sizes="48x48" href="../../assets/icon48.png" />
-    <link rel="icon" type="image/png" sizes="128x128" href="../../assets/icon128.png" />
+    <link
+      rel="icon"
+      type="image/png"
+      sizes="16x16"
+      href="../../assets/icon16.png"
+    />
+    <link
+      rel="icon"
+      type="image/png"
+      sizes="48x48"
+      href="../../assets/icon48.png"
+    />
+    <link
+      rel="icon"
+      type="image/png"
+      sizes="128x128"
+      href="../../assets/icon128.png"
+    />
     <style>
-      body { font-family: -apple-system, BlinkMacSystemFont, Segoe UI, Roboto, sans-serif; margin: 0; padding: 24px; color: #0f172a; background: #f8fafc; }
-      .container { max-width: 900px; margin: 0 auto; background: #fff; border-radius: 16px; box-shadow: 0 10px 30px rgba(0,0,0,0.08); padding: 28px; }
-      h1 { margin: 0 0 12px; font-size: 28px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
-      h2 { margin: 24px 0 8px; font-size: 20px; color: #1e293b; }
-      p, li { line-height: 1.7; }
-      .pill { display: inline-block; padding: 6px 10px; border-radius: 999px; background: #eef2ff; color: #4338ca; font-weight: 600; font-size: 12px; }
-      .note { background: #f1f5f9; border-left: 4px solid #667eea; padding: 12px; border-radius: 8px; }
-      .grid { display: grid; gap: 12px; grid-template-columns: 1fr; }
-      .footer { margin-top: 28px; font-size: 13px; color: #475569; }
-      a { color: #4f46e5; text-decoration: none; }
-      a:hover { text-decoration: underline; }
+      body {
+        font-family:
+          -apple-system,
+          BlinkMacSystemFont,
+          Segoe UI,
+          Roboto,
+          sans-serif;
+        margin: 0;
+        padding: 24px;
+        color: #0f172a;
+        background: #f8fafc;
+      }
+      .container {
+        max-width: 900px;
+        margin: 0 auto;
+        background: #fff;
+        border-radius: 16px;
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.08);
+        padding: 28px;
+      }
+      h1 {
+        margin: 0 0 12px;
+        font-size: 28px;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+      }
+      h2 {
+        margin: 24px 0 8px;
+        font-size: 20px;
+        color: #1e293b;
+      }
+      p,
+      li {
+        line-height: 1.7;
+      }
+      .pill {
+        display: inline-block;
+        padding: 6px 10px;
+        border-radius: 999px;
+        background: #eef2ff;
+        color: #4338ca;
+        font-weight: 600;
+        font-size: 12px;
+      }
+      .note {
+        background: #f1f5f9;
+        border-left: 4px solid #667eea;
+        padding: 12px;
+        border-radius: 8px;
+      }
+      .grid {
+        display: grid;
+        gap: 12px;
+        grid-template-columns: 1fr;
+      }
+      .footer {
+        margin-top: 28px;
+        font-size: 13px;
+        color: #475569;
+      }
+      a {
+        color: #4f46e5;
+        text-decoration: none;
+      }
+      a:hover {
+        text-decoration: underline;
+      }
     </style>
   </head>
   <body>
     <div class="container">
-      <div style="display:flex; align-items:center; gap:10px; margin-bottom:8px;">
+      <div
+        style="
+          display: flex;
+          align-items: center;
+          gap: 10px;
+          margin-bottom: 8px;
+        "
+      >
         <img src="../../assets/icon48.png" alt="IUB" width="32" height="32" />
         <span class="pill">Personvernerklæring</span>
       </div>
       <h1>IUB – Personvernerklæring</h1>
-      <p>Oppdatert: <strong><span id="updated"></span></strong></p>
+      <p>
+        Oppdatert: <strong><span id="updated"></span></strong>
+      </p>
 
       <h2>Hva lagres lokalt</h2>
       <ul>
-        <li><strong>Sessions og skjermbilder:</strong> Lagres i nettleserens utvidelses-lagring (<code>chrome.storage.local</code>) på din maskin. Vi sender ikke disse til noen server.</li>
-        <li><strong>Beskrivelser/kommentarer:</strong> Tekst du legger inn per steg lagres lokalt sammen med skjermbildene.</li>
-        <li><strong>Innstillinger:</strong> Eksportvalg, klikk-indikator, og andre preferanser lagres lokalt.</li>
-        <li><strong>OpenAI API-nøkkel (valgfritt):</strong> Dersom du legger inn en API-nøkkel, lagres den lokalt for å kunne kalle OpenAI på dine vegne.</li>
+        <li>
+          <strong>Sessions og skjermbilder:</strong> Lagres i nettleserens
+          utvidelses-lagring (<code>chrome.storage.local</code>) på din maskin.
+          Vi sender ikke disse til noen server.
+        </li>
+        <li>
+          <strong>Beskrivelser/kommentarer:</strong> Tekst du legger inn per
+          steg lagres lokalt sammen med skjermbildene.
+        </li>
+        <li>
+          <strong>Innstillinger:</strong> Eksportvalg, klikk-indikator, og andre
+          preferanser lagres lokalt.
+        </li>
+        <li>
+          <strong>OpenAI API-nøkkel (valgfritt):</strong> Dersom du legger inn
+          en API-nøkkel, lagres den lokalt for å kunne kalle OpenAI på dine
+          vegne.
+        </li>
+        <li>
+          <strong>AI chat-eksportørvalg:</strong> Verktøylinje-plassering,
+          omfang av meldinger og formattering for ChatGPT, Gemini, DeepSeek,
+          Copilot, Perplexity, Claude og Grok ligger kun i lokal lagring.
+        </li>
       </ul>
 
       <h2>Hva deles ut av enheten</h2>
       <ul>
-        <li><strong>Ingenting sendes automatisk:</strong> Utvidelsen har ingen telemetri, analyse eller skjulte opplastinger.</li>
-        <li><strong>AI-beskrivelse (valgfritt):</strong> Når du ber om AI-beskrivelse for et skjermbilde, sendes akkurat det bildet og prompten til OpenAI sine API-er. Dette skjer kun dersom du har konfigurert en gyldig API-nøkkel og eksplisitt klikker “🤖”.</li>
-        <li><strong>Eksport:</strong> Når du eksporterer til PDF/Markdown, genereres filen lokalt i nettleseren. Ingen data sendes til oss.</li>
+        <li>
+          <strong>Ingenting sendes automatisk:</strong> Utvidelsen har ingen
+          telemetri, analyse eller skjulte opplastinger.
+        </li>
+        <li>
+          <strong>AI-beskrivelse (valgfritt):</strong> Når du ber om
+          AI-beskrivelse for et skjermbilde, sendes akkurat det bildet og
+          prompten til OpenAI sine API-er. Dette skjer kun dersom du har
+          konfigurert en gyldig API-nøkkel og eksplisitt klikker “🤖”.
+        </li>
+        <li>
+          <strong>AI chat-eksportør:</strong> Samtalen leses fra siden du
+          allerede har åpen. Eksportert Markdown/PDF genereres lokalt; vi laster
+          ikke opp transkripsjonen noe sted.
+        </li>
+        <li>
+          <strong>Eksport:</strong> Når du eksporterer til PDF/Markdown fra
+          arbeidsflaten, genereres filen lokalt i nettleseren. Ingen data sendes
+          til oss.
+        </li>
       </ul>
+
+      <h2>Detaljer for AI chat-eksportøren</h2>
+      <div class="note">
+        <p>
+          Eksportøren legger inn en flytende verktøylinje på støttede
+          AI-chatdomener (ChatGPT, Gemini, DeepSeek, Copilot, Perplexity –
+          inkludert Labs – Claude, Grok, Meta AI og Pi). Den endrer kun siden i
+          din nettleser slik at du kan kopiere eller laste ned en samtale du
+          allerede ser på.
+        </p>
+        <ul>
+          <li>
+            <strong>Ingen fjernservere:</strong> Utvidelsen videresender ikke
+            samtalen til noen backend.
+          </li>
+          <li>
+            <strong>Verts-tillatelser:</strong> Manifest-tillatelsene er
+            begrenset til de støttede domenene slik at skriptet kan kjøre der.
+            De gir oss ikke tilgang til andre nettsteder.
+          </li>
+          <li>
+            <strong>Tredjeparts-vilkår gjelder:</strong> Hver AI-leverandør
+            (OpenAI, Google, DeepSeek, Microsoft, Perplexity, Anthropic, xAI,
+            Meta og Inflection AI/Pi) eier sine egne plattformer og har egne
+            personvernregler. Eksportøren vår overstyrer ikke disse.
+          </li>
+        </ul>
+      </div>
 
       <h2>Hvem har tilgang</h2>
       <ul>
-        <li><strong>Du:</strong> Har full kontroll. Du kan slette alt innhold fra innstillinger eller editoren.</li>
-        <li><strong>OpenAI:</strong> Kun når du eksplisitt ber om AI-beskrivelse med egen nøkkel. I så fall behandles data etter OpenAI sine vilkår.</li>
-        <li><strong>PayPal:</strong> Ved donasjon via PayPal sendes du til PayPal. Vi mottar ingen kort-/kontoinformasjon, kun transaksjonsreferanser fra PayPal.</li>
+        <li>
+          <strong>Du:</strong> Har full kontroll. Du kan slette alt innhold fra
+          innstillinger eller editoren.
+        </li>
+        <li>
+          <strong>OpenAI:</strong> Kun når du eksplisitt ber om AI-beskrivelse
+          med egen nøkkel. I så fall behandles data etter OpenAI sine vilkår.
+        </li>
+        <li>
+          <strong>Andre AI-chatter:</strong> Plattformene du bruker (Gemini,
+          DeepSeek, Copilot, Perplexity, Claude, Grok, Meta AI, Pi) mottar
+          allerede samtalen fordi du åpnet nettsiden deres. Eksportøren sender
+          ikke ekstra data til dem.
+        </li>
+        <li>
+          <strong>PayPal:</strong> Ved donasjon via PayPal sendes du til PayPal.
+          Vi mottar ingen kort-/kontoinformasjon, kun transaksjonsreferanser fra
+          PayPal.
+        </li>
       </ul>
 
       <h2>Sletting av data</h2>
-      <p>Du kan slette alle sessions og tilhørende skjermbilder fra alternativer/innstillinger (“Slett alle sessions”) eller direkte i editoren. Innstillinger kan tilbakestilles fra alternativer-siden.</p>
+      <p>
+        Du kan slette alle sessions og tilhørende skjermbilder fra
+        alternativer/innstillinger (“Slett alle sessions”) eller direkte i
+        editoren. Innstillinger kan tilbakestilles fra alternativer-siden.
+      </p>
 
       <h2>Kontakt</h2>
-      <p>Har du spørsmål? Kontakt oss på <a href="mailto:support@iub-rec.com">support@iub-rec.com</a>.</p>
+      <p>
+        Har du spørsmål? Kontakt oss på
+        <a href="mailto:support@iub-rec.com">support@iub-rec.com</a>.
+      </p>
 
       <div class="note">
-        <strong>Ærlighet:</strong> Vi samler ikke inn data om deg i det skjulte. Alle nettverkskall initieres av deg (AI-beskrivelser eller donasjon), og går direkte til tredjepartstjenestene (OpenAI/PayPal).
+        <strong>Ærlighet:</strong> Vi samler ikke inn data om deg i det skjulte.
+        Alle nettverkskall initieres av deg (AI-beskrivelser eller donasjon), og
+        går direkte til tredjepartstjenestene (OpenAI/PayPal).
       </div>
 
       <div class="footer">
-        © <span id="year"></span> IUB. Denne siden kjører som en del av utvidelsen din og kan også åpnes via: chrome-extension://…/src/privacy/privacy.html
+        © <span id="year"></span> IUB. Denne siden kjører som en del av
+        utvidelsen din og kan også åpnes via:
+        chrome-extension://…/src/privacy/privacy.html
       </div>
     </div>
 
     <script>
       const d = new Date();
-      document.getElementById('updated').textContent = d.toLocaleDateString('no-NO') + ' ' + d.toLocaleTimeString('no-NO');
-      document.getElementById('year').textContent = String(d.getFullYear());
+      document.getElementById("updated").textContent =
+        d.toLocaleDateString("no-NO") + " " + d.toLocaleTimeString("no-NO");
+      document.getElementById("year").textContent = String(d.getFullYear());
     </script>
   </body>
 </html>
