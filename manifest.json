@@ -105,6 +105,8 @@
         "src/exporter/chat-exporter.html",
         "src/privacy/privacy.html",
         "src/privacy/privacy-en.html",
+        "src/privacy/terms.html",
+        "src/privacy/terms-en.html",
         "src/vendor/*"
       ],
       "matches": ["<all_urls>"]
