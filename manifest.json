@@ -5,6 +5,7 @@
   "version_name": "3.0.1 - Standalone Edition (CSP Fixed)",
   "description": "__MSG_extensionDescription__",
   "default_locale": "en",
+  "minimum_chrome_version": "116",
   "icons": {
     "16": "assets/icon16.png",
     "48": "assets/icon48.png",
@@ -71,9 +72,15 @@
         "https://chat.openai.com/*",
         "https://gemini.google.com/*",
         "https://www.deepseek.com/*",
+        "https://deepseek.com/*",
         "https://chat.deepseek.com/*",
         "https://copilot.microsoft.com/*",
-        "https://www.bing.com/chat*"
+        "https://www.bing.com/chat*",
+        "https://perplexity.ai/*",
+        "https://www.perplexity.ai/*",
+        "https://claude.ai/*",
+        "https://x.ai/*",
+        "https://www.x.ai/*"
       ],
       "js": ["src/content/ai-chat-exporter.js"],
       "run_at": "document_end"
@@ -85,9 +92,15 @@
     "https://chat.openai.com/*",
     "https://gemini.google.com/*",
     "https://www.deepseek.com/*",
+    "https://deepseek.com/*",
+    "https://chat.deepseek.com/*",
     "https://copilot.microsoft.com/*",
     "https://www.bing.com/*",
-    "<all_urls>"
+    "https://perplexity.ai/*",
+    "https://www.perplexity.ai/*",
+    "https://claude.ai/*",
+    "https://x.ai/*",
+    "https://www.x.ai/*"
   ],
   "web_accessible_resources": [
     {
@@ -98,6 +111,8 @@
         "src/exporter/chat-exporter.html",
         "src/privacy/privacy.html",
         "src/privacy/privacy-en.html",
+        "src/privacy/terms.html",
+        "src/privacy/terms-en.html",
         "src/vendor/*"
       ],
       "matches": ["<all_urls>"]
