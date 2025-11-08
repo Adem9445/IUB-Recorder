@@ -87,19 +87,7 @@
     }
   ],
   "host_permissions": [
-    "https://api.openai.com/*",
-    "https://chatgpt.com/*",
-    "https://chat.openai.com/*",
-    "https://gemini.google.com/*",
-    "https://www.deepseek.com/*",
-    "https://chat.deepseek.com/*",
-    "https://copilot.microsoft.com/*",
-    "https://www.bing.com/*",
-    "https://perplexity.ai/*",
-    "https://www.perplexity.ai/*",
-    "https://claude.ai/*",
-    "https://x.ai/*",
-    "https://www.x.ai/*"
+    "<all_urls>"
   ],
   "web_accessible_resources": [
     {
