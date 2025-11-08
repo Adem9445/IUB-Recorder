@@ -43,6 +43,18 @@
       return;
     }
 
+    const isPointerEvent = e.type === "pointerdown";
+    const pointerButton = typeof e.button === "number" ? e.button : 0;
+    if (
+      isPointerEvent &&
+      pointerButton !== 0 &&
+      e.pointerType !== "touch" &&
+      e.pointerType !== "pen"
+    ) {
+      // Only react to primary button for mouse/pen; touch events allowed
+      return;
+    }
+
     isProcessing = true;
     lastClickTime = now;
 
@@ -111,11 +123,13 @@
     }, 100);
   }
 
+  window.addEventListener("pointerdown", clickHandler, true);
   window.addEventListener("click", clickHandler, true);
 
   // Cleanup function
   function cleanup() {
     try {
+      window.removeEventListener("pointerdown", clickHandler, true);
       window.removeEventListener("click", clickHandler, true);
       clearTimeout(flushTimeout);
       flushMessageQueue(); // Send any remaining messages
