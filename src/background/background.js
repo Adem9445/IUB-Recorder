@@ -117,6 +117,7 @@ function toggleRecording(tab) {
 // API key should be stored in chrome.storage.local for security
 // Users can set it in the options page
 let API_KEY = "";
+let captureMode = "full";
 
 // Load API key from storage on startup
 chrome.storage.local.get(["apiKey"], (result) => {
@@ -125,6 +126,14 @@ chrome.storage.local.get(["apiKey"], (result) => {
     console.log("API key loaded from storage");
   } else {
     console.warn("No API key found. Please set it in the options page.");
+  }
+});
+
+// Load recorder capture mode from synced export options
+chrome.storage.sync.get(["exportOptions"], (result) => {
+  const options = result.exportOptions || {};
+  if (options.capture_mode === "click" || options.capture_mode === "full") {
+    captureMode = options.capture_mode;
   }
 });
 
@@ -244,74 +253,124 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
   return false;
 });
 
-// Helper function to draw click indicator on screenshot
+chrome.storage.onChanged.addListener((changes, areaName) => {
+  if (areaName === "sync" && changes.exportOptions) {
+    const newValue = changes.exportOptions.newValue || {};
+    if (newValue.capture_mode === "click" || newValue.capture_mode === "full") {
+      captureMode = newValue.capture_mode;
+    }
+  }
+});
+
+// Helper function to transform screenshot by cropping and/or drawing click indicator
 async function drawClickIndicator(dataUrl, x, y, tabId) {
   try {
     // Check if click indicator should be shown
     const result = await chrome.storage.local.get(["showClickIndicator"]);
-    if (result.showClickIndicator === false) {
+    const showIndicator = result.showClickIndicator !== false;
+
+    if (!showIndicator && (captureMode !== "click" || x === undefined || y === undefined)) {
+      // Nothing to modify
       return dataUrl;
     }
-    
+
     // Inject script to draw on canvas in page context (where canvas works)
     let results;
     try {
       results = await chrome.scripting.executeScript({
         target: { tabId },
-        func: (imageData, clickX, clickY) => {
-        return new Promise((resolve) => {
-          const img = new Image();
-          img.onload = () => {
-            const canvas = document.createElement('canvas');
-            canvas.width = img.width;
-            canvas.height = img.height;
-            const ctx = canvas.getContext('2d');
-            
-            // Draw original screenshot
-            ctx.drawImage(img, 0, 0);
-            
-            // Calculate device pixel ratio to adjust coordinates
-            const dpr = window.devicePixelRatio || 1;
-            
-            // Adjust coordinates based on device pixel ratio
-            // Screenshots are captured at actual pixel size, but clientX/Y are in CSS pixels
-            const adjustedX = clickX * dpr;
-            const adjustedY = clickY * dpr;
-            
-            // Scale radius based on DPR for consistent size
-            const radius = 25 * dpr;
-            const dotRadius = 5 * dpr;
-            const lineWidth = 4 * dpr;
-            
-            console.log(`Drawing indicator at: original(${clickX}, ${clickY}), adjusted(${adjustedX}, ${adjustedY}), dpr=${dpr}, canvas=${img.width}x${img.height}`);
-            
-            // Outer circle (red)
-            ctx.beginPath();
-            ctx.arc(adjustedX, adjustedY, radius, 0, 2 * Math.PI);
-            ctx.strokeStyle = '#ef4444';
-            ctx.lineWidth = lineWidth;
-            ctx.stroke();
-            
-            // Inner circle (semi-transparent red)
-            ctx.beginPath();
-            ctx.arc(adjustedX, adjustedY, radius, 0, 2 * Math.PI);
-            ctx.fillStyle = 'rgba(239, 68, 68, 0.2)';
-            ctx.fill();
-            
-            // Center dot
-            ctx.beginPath();
-            ctx.arc(adjustedX, adjustedY, dotRadius, 0, 2 * Math.PI);
-            ctx.fillStyle = '#ef4444';
-            ctx.fill();
-            
-            // Return modified image as JPEG to keep file size small
-            resolve(canvas.toDataURL('image/jpeg', 0.85));
-          };
-          img.onerror = () => resolve(imageData);
-          img.src = imageData;
-        });
-      },
-      args: [dataUrl, x, y]
+        func: (
+          imageData,
+          clickX,
+          clickY,
+          mode,
+          shouldDrawIndicator,
+          cropWidth,
+          cropHeight
+        ) => {
+          return new Promise((resolve) => {
+            const img = new Image();
+            img.onload = () => {
+              const dpr = window.devicePixelRatio || 1;
+
+              let sourceX = 0;
+              let sourceY = 0;
+              let sourceWidth = img.width;
+              let sourceHeight = img.height;
+
+              const hasClick =
+                typeof clickX === 'number' &&
+                typeof clickY === 'number' &&
+                !Number.isNaN(clickX) &&
+                !Number.isNaN(clickY);
+
+              if (mode === 'click' && hasClick) {
+                const desiredWidth = Math.min(img.width, Math.round(cropWidth * dpr));
+                const desiredHeight = Math.min(img.height, Math.round(cropHeight * dpr));
+                const centerX = clickX * dpr;
+                const centerY = clickY * dpr;
+
+                sourceX = Math.max(0, Math.min(centerX - desiredWidth / 2, img.width - desiredWidth));
+                sourceY = Math.max(0, Math.min(centerY - desiredHeight / 2, img.height - desiredHeight));
+                sourceWidth = desiredWidth;
+                sourceHeight = desiredHeight;
+              }
+
+              const canvas = document.createElement('canvas');
+              canvas.width = sourceWidth;
+              canvas.height = sourceHeight;
+              const ctx = canvas.getContext('2d');
+
+              ctx.drawImage(
+                img,
+                sourceX,
+                sourceY,
+                sourceWidth,
+                sourceHeight,
+                0,
+                0,
+                sourceWidth,
+                sourceHeight
+              );
+
+              if (shouldDrawIndicator && hasClick) {
+                const adjustedX = clickX * dpr - sourceX;
+                const adjustedY = clickY * dpr - sourceY;
+                const radius = 25 * dpr;
+                const dotRadius = 5 * dpr;
+                const lineWidth = 4 * dpr;
+
+                if (
+                  adjustedX >= 0 &&
+                  adjustedY >= 0 &&
+                  adjustedX <= sourceWidth &&
+                  adjustedY <= sourceHeight
+                ) {
+                  ctx.beginPath();
+                  ctx.arc(adjustedX, adjustedY, radius, 0, 2 * Math.PI);
+                  ctx.strokeStyle = '#ef4444';
+                  ctx.lineWidth = lineWidth;
+                  ctx.stroke();
+
+                  ctx.beginPath();
+                  ctx.arc(adjustedX, adjustedY, radius, 0, 2 * Math.PI);
+                  ctx.fillStyle = 'rgba(239, 68, 68, 0.2)';
+                  ctx.fill();
+
+                  ctx.beginPath();
+                  ctx.arc(adjustedX, adjustedY, dotRadius, 0, 2 * Math.PI);
+                  ctx.fillStyle = '#ef4444';
+                  ctx.fill();
+                }
+              }
+
+              resolve(canvas.toDataURL('image/jpeg', 0.85));
+            };
+            img.onerror = () => resolve(imageData);
+            img.src = imageData;
+          });
+        },
+      args: [dataUrl, x, y, captureMode, shouldDrawIndicator, 640, 480]
       });
     } catch (scriptError) {
       console.debug('Could not inject click indicator script:', scriptError.message);
