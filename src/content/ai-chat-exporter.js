@@ -25,6 +25,7 @@
       toolbar_always: "Always floating (default)",
       toolbar_prefer_header: "Prefer header, fallback to floating",
       toolbar_header_only: "Header only (no floating)",
+      toolbar_show_toggle: "Show floating toolbar",
       toolbar_move: "Move toolbar position",
       timestamps_label: "Include timestamps",
       codeblocks_label: "Include code blocks",
@@ -61,6 +62,7 @@
       toolbar_always: "Alltid flytende (standard)",
       toolbar_prefer_header: "Foretrekk header, fallback til flytende",
       toolbar_header_only: "Kun header (ikke flytende)",
+      toolbar_show_toggle: "Vis flytende verktøylinje",
       toolbar_move: "Flytt verktøylinje",
       timestamps_label: "Inkluder tidsstempler",
       codeblocks_label: "Inkluder kodeblokker",
@@ -179,13 +181,22 @@
   console.log(`AI Chat Exporter: Detected ${platform}`);
 
   const DEFAULT_TOOLBAR_MODE = "always"; // 'always' | 'prefer-header' | 'header-only'
+  const DEFAULT_TOOLBAR_VISIBILITY = true;
   let toolbarMode = DEFAULT_TOOLBAR_MODE;
+  let floatingToolbarEnabled = DEFAULT_TOOLBAR_VISIBILITY;
 
   // Initialize exporter (load settings first)
   chrome.storage?.local.get(["exportSettings"], (res) => {
     const s = res?.exportSettings || {};
     const storedMode = validateToolbarMode(s.toolbarMode);
     toolbarMode = storedMode || DEFAULT_TOOLBAR_MODE;
+    floatingToolbarEnabled =
+      typeof s.floatingToolbarEnabled === "boolean"
+        ? s.floatingToolbarEnabled
+        : DEFAULT_TOOLBAR_VISIBILITY;
+    if (!floatingToolbarEnabled) {
+      document.querySelector(".iub-floating-toolbar")?.remove();
+    }
     initializeExporter(platformConfig);
   });
 
@@ -342,6 +353,9 @@
     const container = findButtonContainer(platformConfig);
     const showFloating = shouldShowFloating(container);
     const floating = showFloating ? ensureFloatingToolbar(platform) : null;
+    if (!showFloating) {
+      document.querySelector(".iub-floating-toolbar")?.remove();
+    }
 
     // Create button container
     const buttonContainer = document.createElement("div");
@@ -430,6 +444,9 @@
    * @returns {boolean}
    */
   function shouldShowFloating(container) {
+    if (!floatingToolbarEnabled) {
+      return false;
+    }
     // Decide based on toolbarMode
     switch (toolbarMode) {
       case "header-only":
@@ -688,7 +705,15 @@
   /**
    * Executes the export using the selected settings.
    * @param {string} platform
-   * @param {{format: string, scope: string, includeRole: string, includeTimestamps: boolean, includeCodeBlocks: boolean}} settings
+   * @param {{
+   *   format: string,
+   *   scope: string,
+   *   includeRole: string,
+   *   includeTimestamps: boolean,
+   *   includeCodeBlocks: boolean,
+   *   toolbarMode?: string,
+   *   floatingToolbarEnabled?: boolean
+   * }} settings
    */
   function exportChatWithSettings(platform, settings) {
     const button = document.querySelector(".iub-export-button");
@@ -1048,7 +1073,11 @@
           typeof stored.includeCodeBlocks === "boolean"
             ? stored.includeCodeBlocks
             : true,
-        toolbarMode: validateToolbarMode(stored.toolbarMode) || toolbarMode
+        toolbarMode: validateToolbarMode(stored.toolbarMode) || toolbarMode,
+        floatingToolbarEnabled:
+          typeof stored.floatingToolbarEnabled === "boolean"
+            ? stored.floatingToolbarEnabled
+            : DEFAULT_TOOLBAR_VISIBILITY
       };
 
       // Create modal
@@ -1190,6 +1219,17 @@
           <!-- Checkboxes -->
           <div style="margin-bottom: 16px; padding: 16px; background: #f8fafc; border-radius: 10px;">
             <label style="display: flex; align-items: center; cursor: pointer; margin-bottom: 12px;">
+              <input type="checkbox" id="floating-toolbar-toggle" ${settings.floatingToolbarEnabled ? "checked" : ""} style="
+                width: 20px;
+                height: 20px;
+                margin-right: 12px;
+                cursor: pointer;
+                accent-color: #667eea;
+              ">
+              <span style="font-size: 14px; color: #334155; font-weight: 500;">🧰 ${t("toolbar_show_toggle")}</span>
+            </label>
+
+            <label style="display: flex; align-items: center; cursor: pointer; margin-bottom: 12px;">
               <input type="checkbox" id="include-timestamps" ${settings.includeTimestamps ? "checked" : ""} style="
                 width: 20px;
                 height: 20px;
@@ -1283,7 +1323,9 @@
           includeRole: modal.querySelector("#include-role").value,
           includeTimestamps: modal.querySelector("#include-timestamps").checked,
           includeCodeBlocks: modal.querySelector("#include-code").checked,
-          toolbarMode: modal.querySelector("#toolbar-mode").value
+          toolbarMode: modal.querySelector("#toolbar-mode").value,
+          floatingToolbarEnabled:
+            modal.querySelector("#floating-toolbar-toggle").checked
         };
 
         // Save settings
@@ -1291,6 +1333,14 @@
           // Apply toolbar mode immediately
           const mode = validateToolbarMode(newSettings.toolbarMode);
           toolbarMode = mode || DEFAULT_TOOLBAR_MODE;
+          floatingToolbarEnabled =
+            typeof newSettings.floatingToolbarEnabled === "boolean"
+              ? newSettings.floatingToolbarEnabled
+              : DEFAULT_TOOLBAR_VISIBILITY;
+          if (!floatingToolbarEnabled) {
+            document.querySelector(".iub-floating-toolbar")?.remove();
+          }
+          addExportButtons(platformConfig);
           modal.remove();
           // Trigger export with new settings
           exportChatWithSettings(platform, newSettings);
