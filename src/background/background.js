@@ -48,54 +48,41 @@ chrome.commands.onCommand.addListener((command) => {
 // Capture full page screenshot
 async function captureFullPage(tab) {
   try {
-    // Open sidepanel first
     chrome.sidePanel.open({ tabId: tab.id });
 
-    // Inject full page capture script
     await chrome.scripting.executeScript({
       target: { tabId: tab.id },
-      function: async () => {
-        const scrollHeight = document.documentElement.scrollHeight;
-        const viewportHeight = window.innerHeight;
-        const scrollSteps = Math.ceil(scrollHeight / viewportHeight);
-
-        // Notify that we're capturing
-        chrome.runtime.sendMessage({
-          action: "snapshot",
-          dataUrl: null,
-          title: "Full Page Capture Starting..."
-        }, () => {
-          // Suppress error
-          if (chrome.runtime.lastError) {}
-        });
-
-        return { scrollHeight, viewportHeight, scrollSteps };
-      }
+      files: ["src/content/full-page-capture.js"]
     });
 
-    // For now, just capture visible area
-    // Full implementation would stitch multiple screenshots
-    chrome.tabs.captureVisibleTab(
-      null,
-      { format: "jpeg", quality: 60 },
-      (dataUrl) => {
-        if (chrome.runtime.lastError || !dataUrl) {
-          console.error("Full page capture failed", chrome.runtime.lastError);
-          safeSendMessage({
-            action: "recordingError",
-            message: "Full page capture failed. Try again on a regular webpage."
-          });
+    const response = await new Promise((resolve) => {
+      chrome.tabs.sendMessage(tab.id, { action: "captureFullPage" }, (result) => {
+        if (chrome.runtime.lastError) {
+          console.error("Full page capture messaging failed", chrome.runtime.lastError);
+          resolve({ success: false, error: chrome.runtime.lastError.message });
           return;
         }
-        safeSendMessage({
-          action: "snapshot",
-          dataUrl,
-          title: "Full Page Screenshot (Alt+Shift+P)"
-        });
-      }
-    );
+        resolve(result);
+      });
+    });
+
+    if (!response || !response.success || !response.dataUrl) {
+      const errorMessage =
+        response?.error || "Full page capture failed. Try again on a regular webpage.";
+      throw new Error(errorMessage);
+    }
+
+    safeSendMessage({
+      action: "snapshot",
+      dataUrl: response.dataUrl,
+      title: "Full Page Screenshot (Alt+Shift+P)"
+    });
   } catch (error) {
     console.error("Full page capture failed:", error);
+    safeSendMessage({
+      action: "recordingError",
+      message: error?.message || "Full page capture failed. Try again on a regular webpage."
+    });
   }
 }
 
@@ -239,6 +226,24 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
         sendResponse({ success: false, error: error.message });
       }
     })();
+    return true;
+  } else if (request.action === "captureVisibleTab") {
+    const windowId = sender.tab?.windowId;
+    chrome.tabs.captureVisibleTab(
+      windowId,
+      { format: "png", quality: proFeatures.highQuality ? 90 : 80 },
+      (dataUrl) => {
+        if (chrome.runtime.lastError || !dataUrl) {
+          console.error("Full page segment capture failed", chrome.runtime.lastError);
+          sendResponse({
+            success: false,
+            error: chrome.runtime.lastError?.message || "Unable to capture the current view"
+          });
+          return;
+        }
+        sendResponse({ success: true, dataUrl });
+      }
+    );
     return true;
   } else if (request.type === "PAGE_CLICK_BATCH") {
     // Handle batched click messages - only process the most recent one
@@ -462,51 +467,57 @@ async function captureAndSave(features, options = {}) {
       await new Promise((resolve) => setTimeout(resolve, 100));
     }
 
-    const activeTab = await chrome.tabs.query({
+    const [activeTab] = await chrome.tabs.query({
       active: true,
       currentWindow: true
     });
-    if (activeTab[0].url.startsWith("chrome://")) {
+
+    if (!activeTab) {
+      throw new Error("No active tab available for capture");
+    }
+
+    if (activeTab.url?.startsWith("chrome://")) {
       throw new Error("Cannot capture chrome:// URLs");
     }
 
     if (features.blurSensitive) {
-      const tab = await chrome.tabs.query({
-        active: true,
-        currentWindow: true
-      });
       try {
         await chrome.scripting.executeScript({
-          target: { tabId: tab[0].id },
+          target: { tabId: activeTab.id },
           files: ["src/content/content-script-blur.js"]
         });
         await new Promise((resolve) => setTimeout(resolve, 500));
       } catch (scriptError) {
-        console.debug('Could not inject blur script:', scriptError.message);
+        console.debug("Could not inject blur script:", scriptError.message);
         // Continue without blur feature
       }
     }
 
     const quality = features.highQuality ? 75 : 50;
+    const windowId =
+      typeof activeTab.windowId === "number" ? activeTab.windowId : undefined;
+
     dataUrl = await new Promise((resolve, reject) => {
-      chrome.tabs.captureVisibleTab(null, { format: "jpeg", quality }, (captured) => {
-        if (chrome.runtime.lastError || !captured) {
-          reject(
-            new Error(
-              chrome.runtime.lastError?.message || "Unable to capture the current tab"
-            )
-          );
-          return;
+      chrome.tabs.captureVisibleTab(
+        windowId ?? chrome.windows.WINDOW_ID_CURRENT,
+        { format: "jpeg", quality },
+        (captured) => {
+          if (chrome.runtime.lastError || !captured) {
+            reject(
+              new Error(
+                chrome.runtime.lastError?.message || "Unable to capture the current tab"
+              )
+            );
+            return;
+          }
+          resolve(captured);
         }
-        resolve(captured);
-      });
+      );
     });
 
     const timestamp = new Date().toISOString().replace(/[:.]/g, "-");
     const filename = `iub-rec-${timestamp}.png`;
-    const currentUrl = (
-      await chrome.tabs.query({ active: true, currentWindow: true })
-    )[0].url;
+    const currentUrl = activeTab.url || "";
 
     return new Promise((resolve) => {
       chrome.storage.local.get(["captures"], async (result) => {

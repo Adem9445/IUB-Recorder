@@ -204,7 +204,8 @@ The extension requires the following permissions:
 - **downloads** - Export files
 - **scripting** - Inject content scripts
 - **tabs** - Manage tab interactions
-- **desktopCapture** - Screen capture functionality
+
+Screen recording now relies on Chrome's `getDisplayMedia` prompt, so no additional desktop capture permission is required.
 
 ---
 

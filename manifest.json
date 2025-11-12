@@ -17,8 +17,7 @@
     "sidePanel",
     "downloads",
     "scripting",
-    "tabs",
-    "desktopCapture"
+    "tabs"
   ],
   "commands": {
     "capture-full-page": {

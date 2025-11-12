@@ -19,6 +19,11 @@ const captures = [];
 const MAX_CAPTURES = 15; // Limit to prevent storage quota issues (reduced for safety)
 let contentTabId = null; // track the tab where listener is injected
 let onUpdateListener = null;
+const aiState = {
+  unavailable: false,
+  missingKeyNotified: false,
+  genericWarningShown: false
+};
 
 // Helper: strip HTML to plain text for storage in captures
 function stripHtml(html) {
@@ -31,6 +36,16 @@ function stripHtml(html) {
   }
 }
 
+function escapeHtml(value) {
+  if (!value) return '';
+  return value
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#39;");
+}
+
 // Helper function to get page info
 async function getPageInfo() {
   try {
@@ -38,7 +53,8 @@ async function getPageInfo() {
     if (tab) {
       return {
         title: tab.title || 'Unknown page',
-        url: shortenUrl(tab.url)
+        url: shortenUrl(tab.url),
+        rawUrl: tab.url || ''
       };
     }
   } catch (error) {
@@ -46,7 +62,8 @@ async function getPageInfo() {
   }
   return {
     title: 'Unknown page',
-    url: 'N/A'
+    url: 'N/A',
+    rawUrl: ''
   };
 }
 
@@ -65,55 +82,14 @@ function shortenUrl(url) {
 }
 
 // Listen for snapshot messages from background
-chrome.runtime.onMessage.addListener((message, sender) => {
+chrome.runtime.onMessage.addListener((message) => {
   console.log("Received message in sidepanel:", message);
   if (message.action === "snapshot") {
-    if (message.dataUrl) {
-      // Check if we've reached the limit
-      if (captures.length >= MAX_CAPTURES) {
-        showWarning(
-          `⚠️ You've reached the ${MAX_CAPTURES}-screenshot limit. Stop and save before recording more.`,
-          { duration: 12000 }
-        );
-        console.warn(`Maximum ${MAX_CAPTURES} screenshots reached`);
-        return;
-      }
-      
-      // Create description with button text and page info (HTML for sidepanel)
-      getPageInfo().then(pageInfo => {
-        const description = `
-          <div style="margin-bottom: 8px;">
-            <strong style="color: #667eea;">${message.title}</strong>
-          </div>
-          <div style="font-size: 13px; color: #475569; margin-bottom: 4px;">
-            <strong>👉 On page:</strong> ${pageInfo.title}
-          </div>
-          <div style="font-size: 12px; color: #94a3b8;">
-            🌐 ${pageInfo.url}
-          </div>
-          <div style="margin-top: 8px; padding-top: 8px; border-top: 1px solid #e2e8f0;">
-            <span style="color: #64748b; font-style: italic; font-size: 12px;">
-              Click ✎ to add more detail...
-            </span>
-          </div>
-        `;
-        
-        addImageBubble(message.dataUrl, description);
-        // Persist plain text description with capture for the editor/exports
-        captures.push({ 
-          dataUrl: message.dataUrl, 
-          title: message.title,
-          description: stripHtml(description)
-        });
-      });
-      
-      // Warn when getting close to limit
-      if (captures.length === MAX_CAPTURES - 5) {
-        showWarning(
-          `⚠️ ${MAX_CAPTURES - captures.length} screenshots left before you hit the session limit.`
-        );
-      }
+    if (!message.dataUrl) {
+      return;
     }
+
+    processSnapshot(message);
   } else if (message.action === "recordingError" && message.message) {
     showError(`Recording issue: ${message.message}`);
   } else if (message.action === "toggleRecording") {
@@ -127,6 +103,176 @@ chrome.runtime.onMessage.addListener((message, sender) => {
     }
   }
 });
+
+function buildFallbackContent(stepTitle, pageInfo) {
+  const safeStepTitle = escapeHtml(stepTitle || 'Screenshot');
+  const safePageTitle = escapeHtml(pageInfo.title);
+  const safeUrl = escapeHtml(pageInfo.url);
+  const headerHtml = `
+    <div style="margin-bottom: 8px;">
+      <strong style="color: #667eea;">${safeStepTitle}</strong>
+    </div>
+    <div style="font-size: 13px; color: #475569; margin-bottom: 4px;">
+      <strong>👉 On page:</strong> ${safePageTitle}
+    </div>
+    <div style="font-size: 12px; color: #94a3b8;">
+      🌐 ${safeUrl}
+    </div>
+    <div style="margin-top: 8px; padding-top: 8px; border-top: 1px solid #e2e8f0;">
+      <span style="color: #64748b; font-style: italic; font-size: 12px;">
+        Click ✎ to add more detail...
+      </span>
+    </div>
+  `;
+  const plain = [
+    `Step: ${stepTitle || 'Screenshot'}`,
+    `Page: ${pageInfo.title}`,
+    pageInfo.rawUrl ? `URL: ${pageInfo.rawUrl}` : ''
+  ]
+    .filter(Boolean)
+    .join('\n');
+  return { html: headerHtml, plain };
+}
+
+function buildAiContent(stepTitle, pageInfo, steps) {
+  const safeStepTitle = escapeHtml(stepTitle || 'Screenshot');
+  const safePageTitle = escapeHtml(pageInfo.title);
+  const safeUrl = escapeHtml(pageInfo.url);
+  const listItems = steps
+    .map(
+      (step, index) =>
+        `<li><strong>Step ${index + 1}:</strong> ${escapeHtml(step)}</li>`
+    )
+    .join('');
+  const html = `
+    <div style="margin-bottom: 8px;">
+      <strong style="color: #667eea;">${safeStepTitle}</strong>
+    </div>
+    <div style="font-size: 13px; color: #475569; margin-bottom: 6px;">
+      <strong>👉 On page:</strong> ${safePageTitle}
+    </div>
+    <div style="font-size: 12px; color: #94a3b8; margin-bottom: 10px;">
+      🌐 ${safeUrl}
+    </div>
+    <ol style="margin-left: 18px; color: #334155; font-size: 13px;">
+      ${listItems}
+    </ol>
+  `;
+  const plain = [
+    `Context: ${stepTitle || 'Screenshot'}`,
+    `Page: ${pageInfo.title}`,
+    pageInfo.rawUrl ? `URL: ${pageInfo.rawUrl}` : '',
+    ...steps.map((step, index) => `Step ${index + 1}: ${step}`)
+  ]
+    .filter(Boolean)
+    .join('\n');
+  return { html, plain };
+}
+
+function sendAnalyzeCapture(dataUrl, previousSteps) {
+  return new Promise((resolve, reject) => {
+    chrome.runtime.sendMessage(
+      { action: 'analyzeCapture', dataUrl, steps: previousSteps },
+      (response) => {
+        if (chrome.runtime.lastError) {
+          reject(new Error(chrome.runtime.lastError.message));
+          return;
+        }
+        if (!response) {
+          reject(new Error('No response from AI analyzer'));
+          return;
+        }
+        if (response.error) {
+          reject(new Error(response.error));
+          return;
+        }
+        resolve(response);
+      }
+    );
+  });
+}
+
+async function processSnapshot(message) {
+  if (captures.length >= MAX_CAPTURES) {
+    showWarning(
+      `⚠️ You've reached the ${MAX_CAPTURES}-screenshot limit. Stop and save before recording more.`,
+      { duration: 12000 }
+    );
+    console.warn(`Maximum ${MAX_CAPTURES} screenshots reached`);
+    return;
+  }
+
+  const captureIndex = captures.length;
+  const placeholderHtml = `
+    <div style="font-size: 13px; color: #475569;">
+      <em>🧠 Analyzing screenshot...</em>
+    </div>
+  `;
+
+  const bubble = addImageBubble(message.dataUrl, placeholderHtml);
+  const captureTitle = message.title || `Screenshot ${captureIndex + 1}`;
+  captures.push({ dataUrl: message.dataUrl, title: captureTitle, description: '' });
+
+  const pageInfoPromise = getPageInfo();
+
+  try {
+    if (aiState.unavailable) {
+      throw new Error('AI unavailable');
+    }
+
+    const previousSteps = captures
+      .slice(0, captureIndex)
+      .map((cap, index) =>
+        cap.description ? `Step ${index + 1}: ${cap.description}` : null
+      )
+      .filter(Boolean);
+
+    const aiResult = await sendAnalyzeCapture(message.dataUrl, previousSteps);
+    if (!aiResult || !Array.isArray(aiResult.steps) || aiResult.steps.length === 0) {
+      throw new Error('AI did not return any steps');
+    }
+
+    const pageInfo = await pageInfoPromise;
+    const aiContent = buildAiContent(captureTitle, pageInfo, aiResult.steps);
+    const textDiv = bubble.querySelector('.bubble-text');
+    if (textDiv) {
+      textDiv.innerHTML = aiContent.html;
+    }
+    captures[captureIndex].description = aiContent.plain;
+  } catch (error) {
+    console.error('AI generation failed, using fallback', error);
+
+    const messageText = error?.message || '';
+    const missingKey = /api key not configured/i.test(messageText);
+
+    if (missingKey) {
+      aiState.unavailable = true;
+      if (!aiState.missingKeyNotified) {
+        showWarning(
+          'Add your OpenAI API key under Settings → API to enable automatic step descriptions.'
+        );
+        aiState.missingKeyNotified = true;
+      }
+    } else if (!aiState.genericWarningShown) {
+      showWarning('AI descriptions are unavailable right now. We saved a basic summary instead.');
+      aiState.genericWarningShown = true;
+    }
+
+    const pageInfo = await pageInfoPromise;
+    const fallback = buildFallbackContent(captureTitle, pageInfo);
+    const textDiv = bubble.querySelector('.bubble-text');
+    if (textDiv) {
+      textDiv.innerHTML = fallback.html;
+    }
+    captures[captureIndex].description = fallback.plain;
+  }
+
+  if (captures.length === MAX_CAPTURES - 5) {
+    showWarning(
+      `⚠️ ${MAX_CAPTURES - captures.length} screenshots left before you hit the session limit.`
+    );
+  }
+}
 
 function handleClickCapture(e) {
   chrome.tabs.captureVisibleTab(
@@ -172,6 +318,9 @@ if (startBtn && stopBtn) {
     }
 
     captures.length = 0;
+    aiState.unavailable = false;
+    aiState.genericWarningShown = false;
+    aiState.missingKeyNotified = false;
     clearChat();
     showChatScreen();
     startBtn.hidden = true;

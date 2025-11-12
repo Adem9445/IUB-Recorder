@@ -6,6 +6,14 @@ class FullPageCapture {
     this.screenshots = [];
     this.isCapturing = false;
     this.originalScrollPosition = 0;
+    this.viewportHeight = window.innerHeight;
+    this.pageHeight = Math.max(
+      document.body.scrollHeight,
+      document.body.offsetHeight,
+      document.documentElement.clientHeight,
+      document.documentElement.scrollHeight,
+      document.documentElement.offsetHeight
+    );
   }
 
   async capture() {
@@ -18,84 +26,100 @@ class FullPageCapture {
     this.screenshots = [];
     this.originalScrollPosition = window.scrollY;
 
+    // Refresh viewport and page sizes in case they changed since construction
+    this.viewportHeight = window.innerHeight;
+    this.pageHeight = Math.max(
+      document.body.scrollHeight,
+      document.body.offsetHeight,
+      document.documentElement.clientHeight,
+      document.documentElement.scrollHeight,
+      document.documentElement.offsetHeight
+    );
+
     try {
       // Show progress indicator
       this.showProgress("Starting full page capture...");
 
-      // Get page dimensions
-      const pageHeight = Math.max(
-        document.body.scrollHeight,
-        document.body.offsetHeight,
-        document.documentElement.clientHeight,
-        document.documentElement.scrollHeight,
-        document.documentElement.offsetHeight
-      );
+      const estimatedSteps = Math.max(1, Math.ceil(this.pageHeight / this.viewportHeight));
+      console.log(`Capturing approximately ${estimatedSteps} screenshots...`);
 
-      const viewportHeight = window.innerHeight;
-      const scrollSteps = Math.ceil(pageHeight / viewportHeight);
+      let targetScrollY = 0;
+      let previousScrollY = -1;
+      let captureCount = 0;
 
-      console.log(`Capturing ${scrollSteps} screenshots...`);
-
-      // Capture each viewport
-      for (let i = 0; i < scrollSteps; i++) {
-        const scrollY = i * viewportHeight;
-
-        // Scroll to position
+      while (targetScrollY < this.pageHeight) {
         window.scrollTo({
-          top: scrollY,
+          top: targetScrollY,
           left: 0,
-          behavior: "instant"
+          behavior: "auto"
         });
 
-        // Wait for rendering
         await this.wait(200);
 
-        // Update progress
-        this.showProgress(`Capturing section ${i + 1} of ${scrollSteps}...`);
-
-        // Request screenshot from background
-        const screenshot = await this.requestScreenshot();
-        if (screenshot) {
-          this.screenshots.push({
-            dataUrl: screenshot,
-            scrollY: scrollY,
-            index: i
-          });
+        const actualScrollY = window.scrollY;
+        if (actualScrollY === previousScrollY && this.screenshots.length > 0) {
+          console.warn("FullPageCapture: scroll position stuck, stopping capture loop.");
+          break;
         }
 
-        // Small delay between captures
+        captureCount += 1;
+        this.showProgress(`Capturing section ${captureCount} of ${estimatedSteps}...`);
+
+        const screenshot = await this.requestScreenshot();
+        if (!screenshot) {
+          throw new Error(`Unable to capture section ${captureCount}`);
+        }
+
+        this.screenshots.push({
+          dataUrl: screenshot,
+          scrollY: actualScrollY,
+          index: captureCount - 1
+        });
+
+        previousScrollY = actualScrollY;
+
+        if (actualScrollY + this.viewportHeight >= this.pageHeight) {
+          break;
+        }
+
+        targetScrollY = actualScrollY + this.viewportHeight;
+
         await this.wait(100);
+      }
+
+      if (this.screenshots.length === 0) {
+        throw new Error("No screenshots were captured");
       }
 
       // Restore original scroll position
       window.scrollTo({
         top: this.originalScrollPosition,
         left: 0,
-        behavior: "instant"
+        behavior: "auto"
       });
 
       this.showProgress("Stitching screenshots...");
 
       // Stitch screenshots together
-      const fullPageImage = await this.stitchScreenshots(viewportHeight);
+      const fullPageImage = await this.stitchScreenshots();
 
       this.hideProgress();
-      this.isCapturing = false;
 
       return fullPageImage;
     } catch (error) {
       console.error("Full page capture failed:", error);
       this.hideProgress();
-      this.isCapturing = false;
 
       // Restore scroll position on error
       window.scrollTo({
         top: this.originalScrollPosition,
         left: 0,
-        behavior: "instant"
+        behavior: "auto"
       });
 
-      return null;
+      throw error;
+    } finally {
+      this.isCapturing = false;
     }
   }
 
@@ -104,13 +128,26 @@ class FullPageCapture {
       chrome.runtime.sendMessage(
         { action: "captureVisibleTab" },
         (response) => {
-          resolve(response?.dataUrl || null);
+          if (chrome.runtime.lastError) {
+            console.error(
+              "FullPageCapture: captureVisibleTab failed",
+              chrome.runtime.lastError
+            );
+            resolve(null);
+            return;
+          }
+          if (!response || response.success === false || !response.dataUrl) {
+            console.warn("FullPageCapture: empty screenshot response", response);
+            resolve(null);
+            return;
+          }
+          resolve(response.dataUrl);
         }
       );
     });
   }
 
-  async stitchScreenshots(viewportHeight) {
+  async stitchScreenshots() {
     if (this.screenshots.length === 0) return null;
     if (this.screenshots.length === 1) return this.screenshots[0].dataUrl;
 
@@ -121,19 +158,44 @@ class FullPageCapture {
     // Load first image to get dimensions
     const firstImg = await this.loadImage(this.screenshots[0].dataUrl);
     const width = firstImg.width;
-    const totalHeight =
-      this.screenshots.length *
-      viewportHeight *
-      (firstImg.height / window.innerHeight);
+    const effectiveViewport = this.viewportHeight || window.innerHeight;
+    const scale = firstImg.height / effectiveViewport;
+    const totalHeight = Math.max(
+      firstImg.height,
+      Math.round((this.pageHeight || window.innerHeight) * scale)
+    );
 
     canvas.width = width;
     canvas.height = totalHeight;
 
-    // Draw each screenshot
+    ctx.fillStyle = "#ffffff";
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+    // Draw each screenshot aligned by scroll position
     for (let i = 0; i < this.screenshots.length; i++) {
-      const img = await this.loadImage(this.screenshots[i].dataUrl);
-      const y = i * viewportHeight * (img.height / window.innerHeight);
-      ctx.drawImage(img, 0, y);
+      const shot = this.screenshots[i];
+      const img = await this.loadImage(shot.dataUrl);
+      const y = Math.round(shot.scrollY * scale);
+
+      if (y >= totalHeight) {
+        continue;
+      }
+
+      const remainingHeight = totalHeight - y;
+      const drawHeight = Math.min(img.height, remainingHeight);
+      const sourceY = drawHeight === img.height ? 0 : img.height - drawHeight;
+
+      ctx.drawImage(
+        img,
+        0,
+        sourceY,
+        img.width,
+        drawHeight,
+        0,
+        y,
+        width,
+        drawHeight
+      );
     }
 
     // Convert to data URL
@@ -190,17 +252,24 @@ class FullPageCapture {
         <span class="message"></span>
       `;
 
-      const style = document.createElement("style");
-      style.textContent = `
-        @keyframes spin {
-          to { transform: rotate(360deg); }
-        }
-        @keyframes slideInRight {
-          from { transform: translateX(400px); opacity: 0; }
-          to { transform: translateX(0); opacity: 1; }
-        }
-      `;
-      document.head.appendChild(style);
+      if (!document.getElementById("iub-fullpage-progress-style")) {
+        const style = document.createElement("style");
+        style.id = "iub-fullpage-progress-style";
+        style.textContent = `
+          @keyframes spin {
+            to { transform: rotate(360deg); }
+          }
+          @keyframes slideInRight {
+            from { transform: translateX(400px); opacity: 0; }
+            to { transform: translateX(0); opacity: 1; }
+          }
+          @keyframes slideOutRight {
+            from { transform: translateX(0); opacity: 1; }
+            to { transform: translateX(400px); opacity: 0; }
+          }
+        `;
+        document.head.appendChild(style);
+      }
 
       document.body.appendChild(progress);
     }
