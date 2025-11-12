@@ -350,7 +350,8 @@
         background: linear-gradient(135deg, #e5e7eb 0%, #d1d5db 100%);
       }
 
-      #start-recording {
+      #start-recording,
+      #start-video-recording {
         background: linear-gradient(
           135deg,
           var(--gradient-start) 0%,
@@ -361,7 +362,8 @@
         overflow: hidden;
       }
 
-      #start-recording::before {
+      #start-recording::before,
+      #start-video-recording::before {
         content: "";
         position: absolute;
         top: 0;
@@ -377,11 +379,13 @@
         transition: left 0.5s;
       }
 
-      #start-recording:hover::before {
+      #start-recording:hover::before,
+      #start-video-recording:hover::before {
         left: 100%;
       }
 
-      #start-recording:hover {
+      #start-recording:hover,
+      #start-video-recording:hover {
         background: linear-gradient(
           135deg,
           var(--gradient-end) 0%,
@@ -396,6 +400,75 @@
 
       #stop-recording:hover {
         background: linear-gradient(135deg, #dc2626 0%, #b91c1c 100%);
+      }
+
+      #start-video-recording {
+        margin-top: 8px;
+        background: linear-gradient(135deg, #ec4899 0%, #d946ef 100%);
+      }
+
+      #start-video-recording:hover {
+        background: linear-gradient(135deg, #d946ef 0%, #ec4899 100%);
+      }
+
+      #stop-video-recording {
+        background: linear-gradient(135deg, #f97316 0%, #ea580c 100%);
+        color: white;
+      }
+
+      #stop-video-recording:hover {
+        background: linear-gradient(135deg, #ea580c 0%, #c2410c 100%);
+      }
+
+      .video-controls {
+        margin-top: 16px;
+        padding: 16px;
+        border-radius: 16px;
+        background: linear-gradient(135deg, rgba(147, 197, 253, 0.18), rgba(196, 181, 253, 0.2));
+        border: 1px solid rgba(148, 163, 184, 0.25);
+      }
+
+      .video-controls-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 12px;
+        flex-wrap: wrap;
+      }
+
+      .video-heading {
+        font-size: 14px;
+        font-weight: 700;
+        color: var(--slate-800);
+      }
+
+      .video-audio-toggle {
+        font-size: 12px;
+        color: var(--slate-600);
+        display: flex;
+        align-items: center;
+        gap: 6px;
+      }
+
+      .video-buttons {
+        display: flex;
+        gap: 12px;
+        margin-top: 12px;
+        flex-wrap: wrap;
+      }
+
+      #video-status {
+        margin-top: 12px;
+        font-size: 12px;
+        color: var(--slate-600);
+      }
+
+      #video-status[data-tone="warning"] {
+        color: #b45309;
+      }
+
+      #video-status[data-tone="error"] {
+        color: #b91c1c;
       }
 
       #chat-container {
@@ -822,6 +895,28 @@
         <span aria-hidden="true">⏹️</span>
         <span>Stop recording</span>
       </button>
+      <div class="video-controls" aria-labelledby="video-controls-title">
+        <div class="video-controls-header">
+          <span class="video-heading" id="video-controls-title">
+            Need a video instead?
+          </span>
+          <label class="video-audio-toggle" for="video-include-audio">
+            <input type="checkbox" id="video-include-audio" checked />
+            Include microphone audio
+          </label>
+        </div>
+        <div class="video-buttons">
+          <button id="start-video-recording" type="button">
+            <span aria-hidden="true">🎥</span>
+            <span>Start screen recording</span>
+          </button>
+          <button id="stop-video-recording" type="button" hidden>
+            <span aria-hidden="true">⏹️</span>
+            <span>Stop screen recording</span>
+          </button>
+        </div>
+        <p id="video-status" hidden aria-live="polite"></p>
+      </div>
       <div id="chat-container" role="region" aria-live="polite" aria-label="Recording steps"></div>
       <!-- Hidden PayPal Donate Form -->
       <div style="display: none">
@@ -862,5 +957,6 @@
     <script type="module" src="./open-privacy.js"></script>
     <script type="module" src="./donate.js"></script>
     <script type="module" src="./onboarding.js"></script>
+    <script type="module" src="./video-controls.js"></script>
   </body>
 </html>

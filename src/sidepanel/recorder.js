@@ -7,6 +7,14 @@
  */
 export function startRecording() {
   return new Promise((resolve, reject) => {
+    if (!chrome.desktopCapture || !chrome.desktopCapture.chooseDesktopMedia) {
+      reject(
+        new Error(
+          "Legacy desktop capture is no longer available. Use the new screen recording controls in the side panel."
+        )
+      );
+      return;
+    }
     // Prompt the user to choose a tab for recording
     chrome.desktopCapture.chooseDesktopMedia(["tab"], (streamId) => {
       if (!streamId) {

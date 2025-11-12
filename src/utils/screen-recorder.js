@@ -1,7 +1,7 @@
 // Screen Recorder - Record screen with audio
 // Supports tab recording, window recording, and full screen
 
-class ScreenRecorder {
+export default class ScreenRecorder {
   constructor() {
     this.mediaRecorder = null;
     this.recordedChunks = [];
@@ -9,15 +9,19 @@ class ScreenRecorder {
     this.stream = null;
     this.startTime = null;
     this.timerInterval = null;
+    this.stopListeners = new Set();
+    this.stylesInjected = false;
   }
 
   async startRecording(options = {}) {
     if (this.isRecording) {
-      console.log("Already recording");
-      return false;
+      throw new Error("A recording session is already running");
     }
 
     try {
+      if (!navigator.mediaDevices?.getDisplayMedia) {
+        throw new Error("Screen recording is not supported in this browser");
+      }
       // Request screen capture
       this.stream = await navigator.mediaDevices.getDisplayMedia({
         video: {
@@ -53,7 +57,7 @@ class ScreenRecorder {
       // Handle errors
       this.mediaRecorder.onerror = (error) => {
         console.error("MediaRecorder error:", error);
-        this.stopRecording();
+        this.cleanupOnError();
       };
 
       // Start recording
@@ -68,66 +72,72 @@ class ScreenRecorder {
       this.showRecordingIndicator();
 
       // Handle stream end (user stops sharing)
-      this.stream.getVideoTracks()[0].addEventListener("ended", () => {
-        this.stopRecording();
-      });
+      const [videoTrack] = this.stream.getVideoTracks();
+      if (videoTrack) {
+        videoTrack.addEventListener("ended", () => {
+          this.stopRecording();
+        });
+      }
 
       return true;
     } catch (error) {
       console.error("Failed to start recording:", error);
-      return false;
+      this.cleanupOnError();
+      throw error;
     }
   }
 
   stopRecording() {
-    if (!this.isRecording) {
+    if (!this.mediaRecorder) {
+      this.finalizeStopState({ notify: false });
       return;
     }
 
-    this.isRecording = false;
+    if (this.mediaRecorder.state === "inactive") {
+      this.finalizeStopState();
+      return;
+    }
 
-    if (this.mediaRecorder && this.mediaRecorder.state !== "inactive") {
+    try {
       this.mediaRecorder.stop();
+    } catch (error) {
+      console.error("Failed to stop MediaRecorder", error);
+      this.finalizeStopState();
+      throw error;
     }
 
-    if (this.stream) {
-      this.stream.getTracks().forEach((track) => track.stop());
-      this.stream = null;
-    }
-
-    this.stopTimer();
-    this.hideRecordingIndicator();
+    this.stopStream();
   }
 
   handleRecordingStop() {
-    if (this.recordedChunks.length === 0) {
-      console.log("No data recorded");
-      return;
+    try {
+      if (this.recordedChunks.length === 0) {
+        this.showNotification("⚠️ No recording data was captured.");
+        return;
+      }
+
+      const mimeType = this.getSupportedMimeType();
+      const blob = new Blob(this.recordedChunks, { type: mimeType });
+      const url = URL.createObjectURL(blob);
+      const elapsedMs = this.startTime ? Date.now() - this.startTime : 0;
+      const duration = Math.max(0, Math.floor(elapsedMs / 1000));
+      const filename = `screen-recording-${Date.now()}.webm`;
+
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = filename;
+      a.click();
+
+      setTimeout(() => URL.revokeObjectURL(url), 100);
+
+      this.showNotification(`✅ Recording saved! Duration: ${duration}s`);
+    } catch (error) {
+      console.error("Failed to save recording", error);
+      this.showNotification("⚠️ We couldn't save the screen recording.");
+    } finally {
+      this.recordedChunks = [];
+      this.finalizeStopState();
     }
-
-    // Create blob from recorded chunks
-    const mimeType = this.getSupportedMimeType();
-    const blob = new Blob(this.recordedChunks, { type: mimeType });
-
-    // Create download link
-    const url = URL.createObjectURL(blob);
-    const duration = Math.floor((Date.now() - this.startTime) / 1000);
-    const filename = `screen-recording-${Date.now()}.webm`;
-
-    // Download file
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = filename;
-    a.click();
-
-    // Cleanup
-    setTimeout(() => URL.revokeObjectURL(url), 100);
-
-    // Show notification
-    this.showNotification(`✅ Recording saved! Duration: ${duration}s`);
-
-    // Reset
-    this.recordedChunks = [];
   }
 
   getSupportedMimeType() {
@@ -174,6 +184,8 @@ class ScreenRecorder {
   }
 
   showRecordingIndicator() {
+    this.hideRecordingIndicator();
+    this.ensureGlobalStyles();
     const indicator = document.createElement("div");
     indicator.id = "iub-recording-indicator";
     indicator.style.cssText = `
@@ -220,19 +232,6 @@ class ScreenRecorder {
       ">Stop</button>
     `;
 
-    const style = document.createElement("style");
-    style.textContent = `
-      @keyframes blink {
-        0%, 100% { opacity: 1; }
-        50% { opacity: 0.3; }
-      }
-      @keyframes pulse {
-        0%, 100% { transform: translateX(-50%) scale(1); }
-        50% { transform: translateX(-50%) scale(1.05); }
-      }
-    `;
-    document.head.appendChild(style);
-
     // Stop button handler
     indicator.querySelector(".stop-btn").addEventListener("click", () => {
       this.stopRecording();
@@ -250,6 +249,7 @@ class ScreenRecorder {
   }
 
   showNotification(message) {
+    this.ensureGlobalStyles();
     const notification = document.createElement("div");
     notification.style.cssText = `
       position: fixed;
@@ -270,7 +270,102 @@ class ScreenRecorder {
     document.body.appendChild(notification);
     setTimeout(() => notification.remove(), 3000);
   }
-}
 
-// Export for use
-window.ScreenRecorder = ScreenRecorder;
+  onStop(callback) {
+    if (typeof callback === "function") {
+      this.stopListeners.add(callback);
+      return () => this.stopListeners.delete(callback);
+    }
+    return () => {};
+  }
+
+  notifyStop() {
+    if (this.stopListeners.size === 0) {
+      return;
+    }
+    [...this.stopListeners].forEach((callback) => {
+      try {
+        callback();
+      } catch (error) {
+        console.error("ScreenRecorder stop callback failed", error);
+      }
+    });
+  }
+
+  cleanupOnError() {
+    try {
+      if (this.mediaRecorder && this.mediaRecorder.state !== "inactive") {
+        this.mediaRecorder.stop();
+        return;
+      }
+    } catch (err) {
+      console.debug("MediaRecorder cleanup issue", err);
+    }
+    this.finalizeStopState();
+  }
+
+  stopStream() {
+    if (!this.stream) return;
+    this.stream.getTracks().forEach((track) => {
+      try {
+        track.stop();
+      } catch (err) {
+        console.debug("Track stop failed", err);
+      }
+    });
+    this.stream = null;
+  }
+
+  finalizeStopState({ notify = true } = {}) {
+    this.stopStream();
+    this.stopTimer();
+    this.hideRecordingIndicator();
+    const wasRecording =
+      this.isRecording || (this.mediaRecorder && this.mediaRecorder.state !== "inactive");
+    this.isRecording = false;
+    this.mediaRecorder = null;
+    this.startTime = null;
+    this.recordedChunks = [];
+    if (notify && wasRecording) {
+      this.notifyStop();
+    }
+  }
+
+  ensureGlobalStyles() {
+    if (this.stylesInjected) {
+      return;
+    }
+    if (document.getElementById("iub-screen-recorder-style")) {
+      this.stylesInjected = true;
+      return;
+    }
+    const style = document.createElement("style");
+    style.id = "iub-screen-recorder-style";
+    style.textContent = `
+      @keyframes blink {
+        0%, 100% { opacity: 1; }
+        50% { opacity: 0.3; }
+      }
+      @keyframes pulse {
+        0%, 100% { transform: translateX(-50%) scale(1); }
+        50% { transform: translateX(-50%) scale(1.05); }
+      }
+      @keyframes fadeOut {
+        from { opacity: 1; }
+        to { opacity: 0; }
+      }
+      @keyframes slideInRight {
+        from {
+          transform: translateX(24px);
+          opacity: 0;
+        }
+        to {
+          transform: translateX(0);
+          opacity: 1;
+        }
+      }
+    `;
+    document.head.appendChild(style);
+    this.stylesInjected = true;
+  }
+}
