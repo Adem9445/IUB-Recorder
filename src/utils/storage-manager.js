@@ -73,19 +73,19 @@ export async function checkStorageQuota() {
   
   if (usage.percentUsed > 90) {
     console.warn('⚠️ Storage quota is critically low:', usage.percentUsed + '%');
-    return { 
-      warning: true, 
+    return {
+      warning: true,
       level: 'critical',
-      message: `Storage ${usage.percentUsed}% full! Slett gamle sessions.`,
-      usage 
+      message: `Storage ${usage.percentUsed}% full! Delete old sessions to stay safe.`,
+      usage
     };
   } else if (usage.percentUsed > 70) {
     console.warn('⚠️ Storage quota is getting high:', usage.percentUsed + '%');
-    return { 
-      warning: true, 
+    return {
+      warning: true,
       level: 'high',
-      message: `Storage ${usage.percentUsed}% full. Vurder å slette gamle sessions.`,
-      usage 
+      message: `Storage ${usage.percentUsed}% full. Consider deleting older sessions.`,
+      usage
     };
   }
   

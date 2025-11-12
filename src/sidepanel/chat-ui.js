@@ -21,6 +21,13 @@ export function showStartScreen() {
   if (container) container.hidden = true;
 }
 
+function extractPlainText(htmlString) {
+  if (!htmlString) return "";
+  const div = document.createElement("div");
+  div.innerHTML = htmlString;
+  return (div.textContent || div.innerText || "").trim();
+}
+
 /**
  * Clear all chat bubbles.
  */
@@ -41,6 +48,11 @@ export function addImageBubble(imageSrc, aiText = "") {
 
   // Determine step number based on existing bubbles
   const stepNumber = container.querySelectorAll(".chat-bubble").length + 1;
+  const plainText = extractPlainText(aiText);
+  const altText = plainText
+    ? `Step ${stepNumber} screenshot. ${plainText}`
+    : `Step ${stepNumber} screenshot.`;
+  const safeAlt = altText.replace(/"/g, "&quot;");
 
   const bubble = document.createElement("div");
   bubble.className = "chat-bubble";
@@ -56,7 +68,7 @@ export function addImageBubble(imageSrc, aiText = "") {
       </div>
     </div>
     <div class="bubble-content">
-      <div class="bubble-image"><img src="${imageSrc}" alt="snapshot" style="width:100px; height:auto;" /></div>
+      <div class="bubble-image"><img src="${imageSrc}" alt="${safeAlt}" style="width:100px; height:auto;" /></div>
       <div class="bubble-text">${aiText}</div>
     </div>
     <div class="comment-container" style="display:none; margin-top:8px;">

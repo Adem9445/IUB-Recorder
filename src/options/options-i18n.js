@@ -11,13 +11,16 @@
       btn_save: 'Apply Changes',
       btn_reset: 'Reset',
       saved: 'Saved',
-      sec_sidepanel: 'Sidepanel Settings',
-      api_key_label: 'OpenAI API Key:',
-      api_key_hint: 'Required for AI-powered features in sidepanel. Get your key from',
+      sec_sidepanel: 'Side panel basics',
+      sec_export: 'AI chat PDF export (advanced)',
+      sec_cloud: 'Cloud sync (optional)',
+      api_key_label: 'OpenAI API key:',
+      api_key_hint: 'Required for AI-powered side panel captions. Get your key from',
+      api_key_saved: 'Saved locally – AI descriptions enabled.',
+      api_key_missing: 'Missing – enter your key to enable AI features.',
       capture_mode: 'Capture mode:',
       capture_full: 'Full screen',
       capture_click: 'Area around click',
-      sec_export: 'AI Chat PDF Export',
       theme: 'Color theme:',
       theme_auto: 'Auto',
       theme_light: 'Light',
@@ -57,9 +60,9 @@
       card_ai_title: '🤖 AI Features',
       card_ai_status: 'Status:',
       card_ai_checking: 'Checking...',
-      card_ai_hint: 'Add your OpenAI API key below for AI descriptions of screenshots',
-      card_click_title: '🎯 Click Indicator',
-      card_click_desc: 'Shows a red circle on screenshots where you click',
+      card_ai_hint: 'Add your OpenAI API key below to unlock automatic screenshot descriptions',
+      card_click_title: '🎯 Click indicator',
+      card_click_desc: 'Show a red ripple where you clicked on each capture',
       card_click_toggle: 'Enable click indicator'
     },
     no: {
@@ -70,13 +73,16 @@
       btn_save: 'Lagre endringer',
       btn_reset: 'Tilbakestill',
       saved: 'Lagret',
-      sec_sidepanel: 'Sidepanel-innstillinger',
+      sec_sidepanel: 'Grunnleggende innstillinger',
+      sec_export: 'AI Chat PDF-eksport (avansert)',
+      sec_cloud: 'Sky-synk (valgfritt)',
       api_key_label: 'OpenAI API-nøkkel:',
-      api_key_hint: 'Påkrevd for AI-funksjoner i sidepanelet. Hent nøkkel fra',
+      api_key_hint: 'Påkrevd for AI-beskrivelser i sidepanelet. Hent nøkkel fra',
+      api_key_saved: 'Lagret lokalt – AI-beskrivelser er aktivert.',
+      api_key_missing: 'Mangler – legg inn nøkkelen for å aktivere AI-funksjoner.',
       capture_mode: 'Opptaksmodus:',
       capture_full: 'Fullskjerm',
       capture_click: 'Område rundt klikk',
-      sec_export: 'AI Chat PDF-eksport',
       theme: 'Fargetema:',
       theme_auto: 'Auto',
       theme_light: 'Lys',
@@ -116,9 +122,9 @@
       card_ai_title: '🤖 AI-Funksjoner',
       card_ai_status: 'Status:',
       card_ai_checking: 'Sjekker...',
-      card_ai_hint: 'Legg til OpenAI API-nøkkel nedenfor for AI-beskrivelser av screenshots',
-      card_click_title: '🎯 Klikk-Indikator',
-      card_click_desc: 'Viser rød sirkel på screenshots der du klikker',
+      card_ai_hint: 'Legg inn API-nøkkelen under for automatiske beskrivelser',
+      card_click_title: '🎯 Klikk-indikator',
+      card_click_desc: 'Vis rød puls der du klikker i hvert skjermbilde',
       card_click_toggle: 'Aktiver klikk-indikator'
     }
   };
@@ -142,13 +148,19 @@
     setText('save', dict.btn_save);
     setText('reset', dict.btn_reset);
     const status = document.getElementById('status');
-    if (status) status.textContent = dict.saved;
+    if (status && status.textContent.trim()) status.textContent = dict.saved;
 
     // Section titles
-    const secSide = Array.from(document.querySelectorAll('section h3')).find(h => h.textContent.includes('Sidepanel') || h.textContent.includes('Sidepanel Settings'));
-    if (secSide) secSide.textContent = dict.sec_sidepanel;
-    const secExport = Array.from(document.querySelectorAll('section h3')).find(h => h.textContent.includes('AI Chat PDF'));
-    if (secExport) secExport.textContent = dict.sec_export;
+    setText('sidepanel-group-title', dict.sec_sidepanel);
+    setText('export-group-title', dict.sec_export);
+    setText('cloud-group-title', dict.sec_cloud);
+    const keyStatus = document.getElementById('api-key-status');
+    if (keyStatus) {
+      const state = keyStatus.dataset.state || 'missing';
+      keyStatus.textContent = state === 'saved'
+        ? dict.api_key_saved
+        : dict.api_key_missing;
+    }
 
     // Labels by for= attribute
     const setLabel = (forId, text) => { const el = document.querySelector(`label[for="${forId}"]`); if (el && text) el.textContent = text; };
@@ -198,7 +210,8 @@
     setOption('title_mode', 'none', dict.title_none);
     setOption('toc', '', dict.toc_none);
     setOption('toc', 'basic', dict.toc_basic);
-    setOption('toc', 'numbering', dict.toc_numbering);
+    setOption('toc', 'numbered', dict.toc_numbering);
+    setOption('page_break', 'after_each', dict.page_break_after);
 
     // TOC note
     const tocNote = document.querySelector('.toc-note');
@@ -230,7 +243,7 @@
         if (checking && (checking.textContent.trim().length === 0 || checking.textContent.includes('Sjekker') || checking.textContent.includes('Checking'))) {
           checking.textContent = dict.card_ai_checking;
         }
-        const hint = aiStatus.querySelector('div:last-of-type');
+        const hint = aiStatus.querySelector('.card-hint');
         if (hint) hint.textContent = dict.card_ai_hint;
       }
     }
@@ -240,12 +253,12 @@
     if (clickLabel) {
       const span = clickLabel.querySelector('span');
       if (span) span.textContent = dict.card_click_toggle;
-      const card = clickLabel.closest('div[style*="linear-gradient"]');
+      const card = clickLabel.closest('.status-card');
       if (card) {
         const title = card.querySelector('h3');
         if (title) title.textContent = dict.card_click_title;
-        const desc = title?.nextElementSibling;
-        if (desc && desc.tagName === 'DIV') desc.textContent = dict.card_click_desc;
+        const desc = card.querySelector('.card-hint');
+        if (desc) desc.textContent = dict.card_click_desc;
       }
     }
   }

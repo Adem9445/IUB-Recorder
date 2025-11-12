@@ -8,6 +8,7 @@ import {
   addImageBubble,
   clearChat
 } from "./chat-ui.js";
+import { showError } from "./feedback.js";
 
 let recordingTabId = null;
 
@@ -33,6 +34,10 @@ document.addEventListener("DOMContentLoaded", () => {
       showChatScreen();
     } catch (error) {
       console.error("Recording start failed:", error);
+      showError(
+        "Couldn't start the recording. Check tab permissions and try again.",
+        { duration: 10000 }
+      );
     }
   });
 

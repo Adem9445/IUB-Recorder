@@ -18,6 +18,7 @@ document.addEventListener("DOMContentLoaded", () => {
   const cloudStatusText = document.getElementById("cloud-status-text");
   const cloudStatusHint = document.getElementById("cloud-status-hint");
   const cloudFieldRows = document.querySelectorAll(".cloud-field");
+  const apiKeyStatus = document.getElementById("api-key-status");
 
   const defaultCloudSettings = {
     provider: "local",
@@ -29,7 +30,7 @@ document.addEventListener("DOMContentLoaded", () => {
   };
 
   const providerLabels = {
-    local: "Lokal lagring",
+    local: "Local storage",
     dropbox: "Dropbox",
     onedrive: "OneDrive",
     gdrive: "Google Drive"
@@ -77,9 +78,11 @@ document.addEventListener("DOMContentLoaded", () => {
     if (!cloudStatusHint) return;
     if (provider === "local") {
       cloudStatusHint.textContent =
-        "Konfigurer skysynk under for å unngå at lokal lagring blir full.";
+        "Configure cloud sync below to avoid hitting the Chrome storage quota.";
     } else {
-      cloudStatusHint.textContent = `Sessions blir synkronisert til ${providerLabels[provider] || provider}.`;
+      cloudStatusHint.textContent = `Sessions sync to ${
+        providerLabels[provider] || provider
+      } once credentials are saved.`;
     }
   }
 
@@ -102,10 +105,12 @@ document.addEventListener("DOMContentLoaded", () => {
     });
     if (cloudStatusText) {
       if (provider === "local") {
-        cloudStatusText.textContent = `${providerLabels.local} · Lokal lagring`;
+        cloudStatusText.textContent = "Local storage";
         cloudStatusText.dataset.state = "local";
       } else {
-        cloudStatusText.textContent = `${providerLabels[provider] || provider} · Ikke lagret`;
+        cloudStatusText.textContent = `${
+          providerLabels[provider] || provider
+        } · Not saved`;
         cloudStatusText.dataset.state = "pending";
       }
     }
@@ -127,15 +132,13 @@ document.addEventListener("DOMContentLoaded", () => {
           const status =
             meta.status || (provider === "local" ? "local" : "pending");
           if (status === "synced") {
-            text += " · Synkronisert";
+            text += " · Synced";
           } else if (status === "cached") {
-            text += " · Uendret";
+            text += " · Up to date";
           } else if (status === "error") {
-            text += ` · Feil${meta.error ? ` (${meta.error})` : ""}`;
+            text += ` · Error${meta.error ? ` (${meta.error})` : ""}`;
           } else if (provider !== "local") {
-            text += " · Klar";
-          } else {
-            text += " · Lokal lagring";
+            text += " · Ready";
           }
           cloudStatusText.textContent = text;
           cloudStatusText.dataset.state = status;
@@ -143,6 +146,14 @@ document.addEventListener("DOMContentLoaded", () => {
         updateCloudHint(provider);
       });
     });
+  }
+
+  function setApiKeyStatus(hasKey) {
+    if (!apiKeyStatus) return;
+    apiKeyStatus.dataset.state = hasKey ? "saved" : "missing";
+    apiKeyStatus.textContent = hasKey
+      ? "Saved locally – AI descriptions enabled."
+      : "Missing – enter your key to enable AI features.";
   }
 
   if (storageProviderSelect) {
@@ -239,9 +250,8 @@ document.addEventListener("DOMContentLoaded", () => {
     };
 
     // Save API key separately in local storage for security
-    if (apiKey) {
-      await chrome.storage.local.set({ apiKey });
-    }
+    await chrome.storage.local.set({ apiKey: apiKey || "" });
+    setApiKeyStatus(Boolean(apiKey && apiKey.trim() !== ""));
 
     await chrome.storage.local.set({ cloudStorageTokens: cloudTokens });
     await chrome.storage.sync.set({
@@ -312,9 +322,10 @@ document.addEventListener("DOMContentLoaded", () => {
 
     // Load API key from local storage
     chrome.storage.local.get(["apiKey", "cloudStorageTokens"], (result) => {
-      if (result.apiKey) {
+      if (typeof result.apiKey === "string") {
         form.elements["api_key"].value = result.apiKey;
       }
+      setApiKeyStatus(Boolean(result.apiKey && result.apiKey.trim() !== ""));
       const tokens = result.cloudStorageTokens || {};
       if (dropboxTokenInput)
         dropboxTokenInput.value = tokens.dropboxToken || "";
@@ -392,22 +403,21 @@ document.addEventListener("DOMContentLoaded", () => {
     if (deleteBtn) {
       deleteBtn.addEventListener("click", async () => {
         const confirm = window.confirm(
-          "Vil du slette ALLE lagrede sessions?\n\n" +
-            "Dette vil frigjøre plass men kan ikke angres!"
+          "Delete all saved sessions?\n\nThis frees storage but cannot be undone."
         );
 
         if (!confirm) return;
 
         try {
           await chrome.storage.local.remove(["sessions", "captures"]);
-          showStatus("✅ Alle sessions slettet!");
+          showStatus("✅ All sessions deleted");
           updateDisplay(); // Refresh storage display
           if (typeof onMetaUpdate === "function") {
             onMetaUpdate();
           }
         } catch (error) {
           console.error("Failed to delete sessions:", error);
-          showStatus("❌ Feil ved sletting");
+          showStatus("❌ Delete failed");
         }
       });
 
@@ -430,13 +440,15 @@ document.addEventListener("DOMContentLoaded", () => {
       const card = document.getElementById("ai-status-card");
 
       if (result.apiKey && result.apiKey.trim() !== "") {
-        statusText.innerHTML = "✅ Aktivert";
+        statusText.innerHTML = "✅ Enabled";
         card.style.background =
           "linear-gradient(135deg, #10b981 0%, #059669 100%)";
+        setApiKeyStatus(true);
       } else {
-        statusText.innerHTML = "❌ Ikke konfigurert";
+        statusText.innerHTML = "❌ Not configured";
         card.style.background =
           "linear-gradient(135deg, #ef4444 0%, #dc2626 100%)";
+        setApiKeyStatus(false);
       }
     });
 
@@ -462,8 +474,8 @@ document.addEventListener("DOMContentLoaded", () => {
       chrome.storage.local.set({ showClickIndicator: e.target.checked });
       showStatus(
         e.target.checked
-          ? "Klikk-indikator aktivert"
-          : "Klikk-indikator deaktivert"
+          ? "Click indicator enabled"
+          : "Click indicator disabled"
       );
     });
   }

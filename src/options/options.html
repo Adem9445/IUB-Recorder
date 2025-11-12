@@ -5,9 +5,9 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta
       name="description"
-      content="Options page for exporting IUB Rec captures as PDF"
+      content="Configure IUB Recorder capture, AI, and export preferences"
     />
-    <title>IUB Options</title>
+    <title>IUB Recorder · Options</title>
     <link rel="icon" type="image/png" sizes="16x16" href="../../assets/icon16.png" />
     <link rel="icon" type="image/png" sizes="48x48" href="../../assets/icon48.png" />
     <link rel="icon" type="image/png" sizes="128x128" href="../../assets/icon128.png" />
@@ -16,582 +16,295 @@
   </head>
   <body>
     <header class="title-wrapper" role="banner">
-      <img src="../../assets/icon128.png" alt="IUB logo" aria-hidden="true" />
-      <div>
-        <h1>IUB</h1>
-        <div class="title-lead">
-          <span id="version" aria-live="polite"></span>
+      <div class="brand">
+        <img src="../../assets/icon128.png" alt="IUB logo" />
+        <div class="brand-copy">
+          <h1>IUB Recorder</h1>
+          <p class="title-lead">
+            <span id="version" aria-live="polite"></span>
+          </p>
+          <p class="tagline">Tune capture, AI, and export preferences from one place.</p>
         </div>
       </div>
-      <div
-        style="margin-left: auto; display: flex; gap: 10px; align-items: center"
-      >
-        <button id="open-sidebar" class="action-button">📂 Open Sidebar</button>
-        <button id="open-workspace" class="action-button">🏢 Open Workspace</button>
-        <button id="open-editor" class="action-button">✏️ Open Editor</button>
+      <div class="header-actions">
+        <button id="open-sidebar" class="action-button">📂 Open sidebar</button>
+        <button id="open-workspace" class="action-button">🏢 Open workspace</button>
+        <button id="open-editor" class="action-button">✏️ Open editor</button>
       </div>
-      <style>
-        .action-button {
-          padding: 10px 20px;
-          background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-          color: white;
-          border: none;
-          border-radius: 10px;
-          cursor: pointer;
-          font-weight: 600;
-          font-size: 14px;
-          transition: all 0.3s ease;
-          box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
-        }
-        .action-button:hover {
-          transform: translateY(-2px);
-          box-shadow: 0 6px 20px rgba(102, 126, 234, 0.5);
-          background: linear-gradient(135deg, #764ba2 0%, #667eea 100%);
-        }
-        .action-button:active {
-          transform: translateY(0);
-          box-shadow: 0 2px 10px rgba(102, 126, 234, 0.3);
-        }
-        .title-wrapper {
-          display: flex;
-          align-items: center;
-          gap: 15px;
-        }
-      </style>
     </header>
-    <hr />
+
     <main>
-      <!-- Feature Info Cards -->
-      <section style="margin-bottom: 30px;">
-        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 20px; margin-bottom: 20px;">
-          <!-- Storage Usage Card -->
-          <div style="
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
-            padding: 20px;
-            border-radius: 15px;
-            box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
-          ">
-            <h3 style="margin: 0 0 10px 0; font-size: 18px;">💾 Storage Bruk</h3>
-            <div id="storage-info" style="font-size: 14px; opacity: 0.95;">
-              <div style="margin-bottom: 8px;">
-                <strong>Brukt:</strong> <span id="storage-used">Laster...</span>
+      <section class="intro-callout" aria-label="Quick start guide">
+        <h2>Quick start</h2>
+        <ol>
+          <li>Add your OpenAI API key so the assistant can describe each step.</li>
+          <li>Choose how we capture the screen when you click.</li>
+          <li>Open the advanced sections only when you need export or cloud options.</li>
+        </ol>
+      </section>
+
+      <section class="card-grid" aria-label="Status overview">
+        <article class="status-card storage-card">
+          <h3>💾 Storage usage</h3>
+          <div id="storage-info">
+            <div><strong>Used:</strong> <span id="storage-used">Loading…</span></div>
+            <div><strong>Free:</strong> <span id="storage-free">Loading…</span></div>
+            <div class="storage-bar">
+              <div id="storage-bar"></div>
+            </div>
+            <div id="cloud-status-row" class="cloud-status">
+              <span>☁️ Sync status:</span>
+              <span id="cloud-status-text" data-state="local">Local only</span>
+            </div>
+            <small id="cloud-status-hint">
+              Configure cloud sync below to avoid hitting the Chrome storage quota.
+            </small>
+            <button id="delete-all-sessions-btn" class="ghost-button">
+              🗑️ Delete all sessions
+            </button>
+          </div>
+        </article>
+
+        <article id="ai-status-card" class="status-card ai-card">
+          <h3>🤖 AI features</h3>
+          <div id="ai-status">
+            <div><strong>Status:</strong> <span id="ai-status-text">Checking…</span></div>
+            <p class="card-hint">
+              Add your OpenAI API key below to unlock automatic screenshot descriptions.
+            </p>
+          </div>
+        </article>
+
+        <article class="status-card click-card">
+          <h3>🎯 Click indicator</h3>
+          <p class="card-hint">Show a red ripple where you clicked on each capture.</p>
+          <label class="checkbox-row">
+            <input type="checkbox" id="show-click-indicator-option" />
+            <span>Enable click indicator</span>
+          </label>
+        </article>
+      </section>
+
+      <form
+        class="options"
+        aria-labelledby="options-title"
+        autocomplete="off"
+        spellcheck="false"
+      >
+        <h2 id="options-title">Options</h2>
+
+        <section class="settings-group">
+          <h3 class="settings-heading" id="sidepanel-group-title">Side panel basics</h3>
+          <div class="form-row">
+            <label for="api_key">OpenAI API key</label>
+            <div class="input-stack">
+              <input
+                type="password"
+                name="api_key"
+                id="api_key"
+                placeholder="sk-proj-..."
+                aria-describedby="api-key-status api-key-hint"
+              />
+              <div class="status-inline" id="api-key-status" data-state="missing">
+                Missing – enter your key to enable AI features.
               </div>
-              <div style="margin-bottom: 8px;">
-                <strong>Ledig:</strong> <span id="storage-free">Laster...</span>
-              </div>
-              <div style="background: rgba(255, 255, 255, 0.2); height: 8px; border-radius: 4px; overflow: hidden; margin-top: 10px;">
-                <div id="storage-bar" style="background: white; height: 100%; width: 0%; transition: width 0.5s ease;"></div>
-              </div>
-              <div id="cloud-status-row" style="display:flex; align-items:center; gap:8px; margin-top: 16px; font-weight:600;">
-                <span>☁️ Sky-synk:</span>
-                <span id="cloud-status-text" data-state="local">Lokal lagring</span>
-              </div>
-              <small id="cloud-status-hint" style="display:block; margin-top:4px; font-size:12px; opacity:0.85;">
-                Konfigurer skysynk under for å unngå at lokal lagring blir full.
+              <small id="api-key-hint">
+                Required for AI-powered side panel captions. Get your key from
+                <a href="https://platform.openai.com/api-keys" target="_blank" rel="noopener">
+                  OpenAI
+                </a>.
               </small>
-              <button id="delete-all-sessions-btn" style="
-                margin-top: 15px;
-                padding: 8px 16px;
-                background: rgba(255, 255, 255, 0.2);
-                color: white;
-                border: 2px solid white;
-                border-radius: 8px;
-                cursor: pointer;
-                font-size: 13px;
-                font-weight: 600;
-                width: 100%;
-                transition: all 0.3s ease;
-              ">
-                🗑️ Slett Alle Sessions
-              </button>
             </div>
           </div>
 
-          <!-- AI Features Card -->
-          <div id="ai-status-card" style="
-            background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
-            color: white;
-            padding: 20px;
-            border-radius: 15px;
-            box-shadow: 0 4px 15px rgba(59, 130, 246, 0.3);
-          ">
-            <h3 style="margin: 0 0 10px 0; font-size: 18px;">🤖 AI-Funksjoner</h3>
-            <div id="ai-status" style="font-size: 14px; opacity: 0.95;">
-              <div style="margin-bottom: 8px;">
-                <strong>Status:</strong> <span id="ai-status-text">Sjekker...</span>
-              </div>
-              <div style="font-size: 13px; margin-top: 10px;">
-                Legg til OpenAI API-nøkkel nedenfor for AI-beskrivelser av screenshots
-              </div>
-            </div>
+          <div class="form-row">
+            <label for="capture_mode">Capture mode</label>
+            <select name="capture_mode" id="capture_mode">
+              <option value="full">Full screen</option>
+              <option value="click">Area around click</option>
+            </select>
+            <small>Click mode keeps files smaller by focusing on what you interact with.</small>
           </div>
+        </section>
 
-          <!-- Click Indicator Card -->
-          <div style="
-            background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
-            color: white;
-            padding: 20px;
-            border-radius: 15px;
-            box-shadow: 0 4px 15px rgba(239, 68, 68, 0.3);
-          ">
-            <h3 style="margin: 0 0 10px 0; font-size: 18px;">🎯 Klikk-Indikator</h3>
-            <div style="font-size: 14px; opacity: 0.95;">
-              <div style="margin-bottom: 8px;">
-                Viser rød sirkel på screenshots der du klikker
+        <details class="settings-group" open>
+          <summary class="settings-heading" id="export-group-title">AI chat PDF export (advanced)</summary>
+          <div class="details-content">
+            <div class="form-row">
+              <label for="theme">Color theme</label>
+              <select name="theme" id="theme">
+                <option value="">Auto</option>
+                <option value="light">Light</option>
+                <option value="dark">Dark</option>
+              </select>
+            </div>
+
+            <label class="checkbox-row">
+              <input type="checkbox" name="no_questions" id="no_questions" />
+              <span>Exclude user input bubbles</span>
+            </label>
+            <label class="checkbox-row">
+              <input type="checkbox" name="no_icons" id="no_icons" />
+              <span>Hide reaction icons</span>
+            </label>
+
+            <div class="form-row">
+              <label for="zoom">Font size (30–300%)</label>
+              <input type="number" name="zoom" id="zoom" min="30" max="300" step="5" />
+            </div>
+
+            <div class="form-row">
+              <label for="margins">Page margins</label>
+              <select name="margins" id="margins">
+                <option value="">Default</option>
+                <option value="minimal">Minimal</option>
+                <option value="custom">Custom</option>
+              </select>
+            </div>
+
+            <div class="form-row sub-row sub-margin" id="custom-margins">
+              <div class="sub-grid">
+                <label for="margin_top">Top margin (mm)</label>
+                <input type="number" name="margin_top" id="margin_top" min="0" />
+                <label for="margin_bottom">Bottom margin (mm)</label>
+                <input type="number" name="margin_bottom" id="margin_bottom" min="0" />
+                <label for="margin_left">Left margin (mm)</label>
+                <input type="number" name="margin_left" id="margin_left" min="0" />
+                <label for="margin_right">Right margin (mm)</label>
+                <input type="number" name="margin_right" id="margin_right" min="0" />
               </div>
-              <label style="display: flex; align-items: center; gap: 10px; cursor: pointer; margin-top: 10px;">
-                <input type="checkbox" id="show-click-indicator-option" style="width: 20px; height: 20px; cursor: pointer;">
-                <span>Aktiver klikk-indikator</span>
-              </label>
+            </div>
+
+            <div class="form-row">
+              <label for="title_mode">PDF title</label>
+              <select name="title_mode" id="title_mode">
+                <option value="">Use capture title</option>
+                <option value="ask">Ask me</option>
+                <option value="none">No title</option>
+              </select>
+            </div>
+
+            <div class="form-row">
+              <label for="q_color">User input background color</label>
+              <select name="q_color" id="q_color">
+                <option value="default">Default</option>
+                <option value="light">Light</option>
+                <option value="dark">Dark</option>
+                <option value="custom">Custom</option>
+              </select>
+            </div>
+
+            <div class="form-row" id="q_color_picker_row">
+              <label for="q_color_picker">Choose background color</label>
+              <input type="color" name="q_color_picker" id="q_color_picker" />
+            </div>
+
+            <div class="form-row">
+              <label for="q_fg_color">User input text color</label>
+              <select name="q_fg_color" id="q_fg_color">
+                <option value="default">Default</option>
+                <option value="light">Light</option>
+                <option value="dark">Dark</option>
+                <option value="custom">Custom</option>
+              </select>
+            </div>
+
+            <div class="form-row" id="q_fg_color_picker_row">
+              <label for="q_fg_color_picker">Choose text color</label>
+              <input type="color" name="q_fg_color_picker" id="q_fg_color_picker" />
+            </div>
+
+            <div class="form-row">
+              <label for="page_break">Page breaks</label>
+              <select name="page_break" id="page_break">
+                <option value="">Auto</option>
+                <option value="after_each">After each capture</option>
+              </select>
+            </div>
+
+            <div class="form-row">
+              <label for="toc">Table of contents</label>
+              <select name="toc" id="toc">
+                <option value="">None</option>
+                <option value="basic">Standard</option>
+                <option value="numbered">Numbered</option>
+              </select>
+              <small class="toc-note">The table of contents is built from your capture titles.</small>
+            </div>
+
+            <label class="checkbox-row">
+              <input type="checkbox" name="model_name" id="model_name" />
+              <span>Include AI model name in the export</span>
+            </label>
+          </div>
+        </details>
+
+        <details class="settings-group">
+          <summary class="settings-heading" id="cloud-group-title">Cloud sync (optional)</summary>
+          <div class="details-content">
+            <div class="form-row">
+              <label for="storage_provider">Sync provider</label>
+              <select name="storage_provider" id="storage_provider">
+                <option value="local">Local only</option>
+                <option value="dropbox">Dropbox</option>
+                <option value="onedrive">OneDrive</option>
+                <option value="gdrive">Google Drive</option>
+              </select>
+            </div>
+
+            <div class="form-row">
+              <label for="cloud_file_name">Session file name</label>
+              <input
+                type="text"
+                name="cloud_file_name"
+                id="cloud_file_name"
+                placeholder="iub-recorder-sessions.json"
+              />
+              <small>Stored as JSON – keep the .json extension.</small>
+            </div>
+
+            <div class="form-row cloud-field" data-provider="dropbox">
+              <label for="dropbox_token">Dropbox access token</label>
+              <input type="password" name="dropbox_token" id="dropbox_token" />
+            </div>
+            <div class="form-row cloud-field" data-provider="dropbox">
+              <label for="dropbox_path">Dropbox folder path</label>
+              <input type="text" name="dropbox_path" id="dropbox_path" />
+            </div>
+
+            <div class="form-row cloud-field" data-provider="onedrive">
+              <label for="onedrive_token">OneDrive access token</label>
+              <input type="password" name="onedrive_token" id="onedrive_token" />
+            </div>
+            <div class="form-row cloud-field" data-provider="onedrive">
+              <label for="onedrive_path">OneDrive folder path</label>
+              <input type="text" name="onedrive_path" id="onedrive_path" />
+            </div>
+
+            <div class="form-row cloud-field" data-provider="gdrive">
+              <label for="gdrive_token">Google Drive token</label>
+              <input type="password" name="gdrive_token" id="gdrive_token" />
+            </div>
+            <div class="form-row cloud-field" data-provider="gdrive">
+              <label for="gdrive_folder_id">Google Drive folder ID</label>
+              <input type="text" name="gdrive_folder_id" id="gdrive_folder_id" />
+            </div>
+            <div class="form-row cloud-field" data-provider="gdrive">
+              <label for="gdrive_file_id">Google Drive file ID</label>
+              <input type="text" name="gdrive_file_id" id="gdrive_file_id" />
             </div>
           </div>
+        </details>
+
+        <div class="form-actions">
+          <button type="submit" id="save" class="save">Apply changes</button>
+          <button type="button" id="reset" class="secondary">Reset</button>
+          <span id="status" role="status" aria-live="polite"></span>
         </div>
-      </section>
-
-      <section class="pdfcrowd-category" role="form">
-        <h2 id="options-title" class="pdfcrowd-category-title">Options</h2>
-        <form
-          class="options"
-          aria-labelledby="options-title"
-          autocomplete="off"
-          spellcheck="false"
-        >
-          <h3 style="margin: 12px 0 8px 0;">Sidepanel Settings</h3>
-          <table role="presentation" style="margin-bottom: 16px;">
-            <tr>
-              <th scope="row">
-                <label for="api_key">OpenAI API Key:</label>
-              </th>
-              <td>
-                <input
-                  type="password"
-                  name="api_key"
-                  id="api_key"
-                  placeholder="sk-proj-..."
-                  aria-label="Enter your OpenAI API key"
-                  style="
-                    width: 100%;
-                    padding: 6px;
-                    border: 1px solid #ccc;
-                    border-radius: 4px;
-                  "
-                />
-                <small style="display: block; margin-top: 4px; color: #666"
-                  >Required for AI-powered features in sidepanel. Get your key from
-                  <a href="https://platform.openai.com/api-keys" target="_blank"
-                    >OpenAI</a
-                  ></small
-                >
-              </td>
-            </tr>
-            <tr>
-              <th scope="row">
-                <label for="capture_mode">Capture mode:</label>
-              </th>
-              <td>
-                <select
-                  name="capture_mode"
-                  id="capture_mode"
-                  aria-label="Select capture mode"
-                >
-                  <option value="full">Full screen</option>
-                  <option value="click">Area around click</option>
-                </select>
-              </td>
-            </tr>
-          </table>
-
-          <h3 style="margin: 24px 0 8px 0;">Sky-lagring</h3>
-          <table role="presentation">
-            <tr>
-              <th scope="row">
-                <label for="storage_provider">Synk til:</label>
-              </th>
-              <td>
-                <select name="storage_provider" id="storage_provider" aria-label="Velg skylagring">
-                  <option value="local">Kun lokal lagring (standard)</option>
-                  <option value="dropbox">Dropbox</option>
-                  <option value="onedrive">Microsoft OneDrive</option>
-                  <option value="gdrive">Google Drive</option>
-                </select>
-                <small style="display:block; margin-top:4px; color:#555;">
-                  Velg hvor sessions skal sikkerhetskopieres. Tokens lagres kun lokalt på maskinen din.
-                </small>
-              </td>
-            </tr>
-            <tr class="cloud-field" data-provider="dropbox,onedrive,gdrive">
-              <th scope="row">
-                <label for="cloud_file_name">Filnavn:</label>
-              </th>
-              <td>
-                <input
-                  type="text"
-                  id="cloud_file_name"
-                  name="cloud_file_name"
-                  placeholder="iub-recorder-sessions.json"
-                />
-                <small style="display:block; margin-top:4px; color:#555;">
-                  JSON-fil som inneholder alle sessions. Opprettes automatisk hvis den ikke finnes.
-                </small>
-              </td>
-            </tr>
-            <tr class="cloud-field" data-provider="dropbox">
-              <th scope="row">
-                <label for="dropbox_token">Dropbox access token:</label>
-              </th>
-              <td>
-                <input type="password" id="dropbox_token" autocomplete="off" placeholder="sl.BC..." />
-                <small style="display:block; margin-top:4px; color:#555;">Generer et "App access token" fra Dropbox App Console.</small>
-              </td>
-            </tr>
-            <tr class="cloud-field" data-provider="dropbox">
-              <th scope="row">
-                <label for="dropbox_path">Dropbox mappe:</label>
-              </th>
-              <td>
-                <input type="text" id="dropbox_path" placeholder="/Apps/IUB-Recorder" />
-              </td>
-            </tr>
-            <tr class="cloud-field" data-provider="onedrive">
-              <th scope="row">
-                <label for="onedrive_token">OneDrive access token:</label>
-              </th>
-              <td>
-                <input type="password" id="onedrive_token" autocomplete="off" placeholder="EwB4A..." />
-                <small style="display:block; margin-top:4px; color:#555;">Bruk Microsoft Graph token med skrive-tilgang til OneDrive.</small>
-              </td>
-            </tr>
-            <tr class="cloud-field" data-provider="onedrive">
-              <th scope="row">
-                <label for="onedrive_path">OneDrive sti:</label>
-              </th>
-              <td>
-                <input type="text" id="onedrive_path" placeholder="/Documents/IUB-Recorder" />
-              </td>
-            </tr>
-            <tr class="cloud-field" data-provider="gdrive">
-              <th scope="row">
-                <label for="gdrive_token">Google Drive token:</label>
-              </th>
-              <td>
-                <input type="password" id="gdrive_token" autocomplete="off" placeholder="ya29.a0..." />
-                <small style="display:block; margin-top:4px; color:#555;">Bruk OAuth 2.0 access token med Drive API scope.</small>
-              </td>
-            </tr>
-            <tr class="cloud-field" data-provider="gdrive">
-              <th scope="row">
-                <label for="gdrive_folder_id">Google Drive mappe-ID:</label>
-              </th>
-              <td>
-                <input type="text" id="gdrive_folder_id" placeholder="(valgfritt)" />
-                <small style="display:block; margin-top:4px; color:#555;">La stå tom for å lagre i rot. Bruk ID fra Drive-URL.</small>
-              </td>
-            </tr>
-            <tr class="cloud-field" data-provider="gdrive">
-              <th scope="row">
-                <label for="gdrive_file_id">Eksisterende fil-ID:</label>
-              </th>
-              <td>
-                <input type="text" id="gdrive_file_id" placeholder="(valgfritt)" />
-                <small style="display:block; margin-top:4px; color:#555;">Om du allerede har en fil, lim inn ID her. Ellers opprettes ny.</small>
-              </td>
-            </tr>
-          </table>
-
-          <h3 style="margin: 12px 0 8px 0;">AI Chat PDF Export</h3>
-          <table role="presentation">
-            <tr>
-              <th scope="row">
-                <label for="theme">Color theme:</label>
-              </th>
-              <td>
-                <select name="theme" id="theme" aria-label="Select color theme">
-                  <option value="">Auto</option>
-                  <option value="light">Light</option>
-                  <option value="dark">Dark</option>
-                </select>
-              </td>
-            </tr>
-            <tr>
-              <th scope="row">
-                <label for="no_questions">Exclude user inputs:</label>
-              </th>
-              <td>
-                <input
-                  type="checkbox"
-                  id="no_questions"
-                  name="no_questions"
-                  aria-label="Exclude user inputs from PDF"
-                />
-              </td>
-            </tr>
-            <tr>
-              <th scope="row">
-                <label for="no_icons">Exclude icons:</label>
-              </th>
-              <td>
-                <input
-                  type="checkbox"
-                  id="no_icons"
-                  name="no_icons"
-                  aria-label="Exclude icons from PDF"
-                />
-              </td>
-            </tr>
-            <tr>
-              <th scope="row">
-                <label for="zoom">Font size (30-300%):</label>
-              </th>
-              <td>
-                <input
-                  name="zoom"
-                  id="zoom"
-                  type="number"
-                  step="1"
-                  min="10"
-                  max="300"
-                  aria-label="Set font size percentage"
-                />
-              </td>
-            </tr>
-            <tr>
-              <th scope="row">
-                <label for="margins">Page margins:</label>
-              </th>
-              <td>
-                <select
-                  name="margins"
-                  id="margins"
-                  aria-label="Select page margins"
-                >
-                  <option value="">Default</option>
-                  <option value="minimal">Minimal</option>
-                  <option value="custom">Custom</option>
-                </select>
-              </td>
-            </tr>
-            <tr class="sub-option sub-margin">
-              <th scope="row">
-                <label for="margin_top">Top margin:</label>
-              </th>
-              <td>
-                <input
-                  type="text"
-                  name="margin_top"
-                  id="margin_top"
-                  aria-label="Specify top margin (e.g., 0, 10px, 2cm)"
-                  title="Accepted units: in, px, cm, mm, pt"
-                  pattern="((\d+(\.\d*)?)|((\d*\.)?\d+))\s*(in|cm|mm|px|pt|)"
-                />
-              </td>
-            </tr>
-            <tr class="sub-option sub-margin">
-              <th scope="row">
-                <label for="margin_bottom">Bottom margin:</label>
-              </th>
-              <td>
-                <input
-                  type="text"
-                  name="margin_bottom"
-                  id="margin_bottom"
-                  aria-label="Specify bottom margin (e.g., 0, 10px, 2cm)"
-                  title="Accepted units: in, px, cm, mm, pt"
-                  pattern="((\d+(\.\d*)?)|((\d*\.)?\d+))\s*(in|cm|mm|px|pt|)"
-                />
-              </td>
-            </tr>
-            <tr class="sub-option sub-margin">
-              <th scope="row">
-                <label for="margin_left">Left margin:</label>
-              </th>
-              <td>
-                <input
-                  type="text"
-                  name="margin_left"
-                  id="margin_left"
-                  aria-label="Specify left margin (e.g., 0, 10px, 2cm)"
-                  title="Accepted units: in, px, cm, mm, pt"
-                  pattern="((\d+(\.\d*)?)|((\d*\.)?\d+))\s*(in|cm|mm|px|pt|)"
-                />
-              </td>
-            </tr>
-            <tr class="sub-option sub-margin">
-              <th scope="row">
-                <label for="margin_right">Right margin:</label>
-              </th>
-              <td>
-                <input
-                  type="text"
-                  name="margin_right"
-                  id="margin_right"
-                  aria-label="Specify right margin (e.g., 0, 10px, 2cm)"
-                  title="Accepted units: in, px, cm, mm, pt"
-                  pattern="((\d+(\.\d*)?)|((\d*\.)?\d+))\s*(in|cm|mm|px|pt|)"
-                />
-              </td>
-            </tr>
-            <tr>
-              <th scope="row">
-                <label for="title_mode">PDF Title:</label>
-              </th>
-              <td>
-                <select
-                  name="title_mode"
-                  id="title_mode"
-                  aria-label="Set PDF title"
-                >
-                  <option value="">Capture title</option>
-                  <option value="ask">Ask</option>
-                  <option value="none">None</option>
-                </select>
-              </td>
-            </tr>
-            <tr>
-              <th scope="row">
-                <label for="q_color">User input background color:</label>
-              </th>
-              <td>
-                <select
-                  id="q_color"
-                  name="q_color"
-                  aria-label="Choose user input background color"
-                >
-                  <option value="default">Default</option>
-                  <option value="none">None</option>
-                  <option value="custom">Custom</option>
-                </select>
-              </td>
-            </tr>
-            <tr id="q_color_picker_row" class="sub-option">
-              <th scope="row">
-                <label for="q_color_picker">Choose color:</label>
-              </th>
-              <td>
-                <input
-                  id="q_color_picker"
-                  type="color"
-                  name="q_color_picker"
-                  aria-label="Pick custom user input background color"
-                />
-              </td>
-            </tr>
-            <tr>
-              <th scope="row">
-                <label for="q_fg_color">User input text color:</label>
-              </th>
-              <td>
-                <select
-                  id="q_fg_color"
-                  name="q_fg_color"
-                  aria-label="Choose user input text color"
-                >
-                  <option value="default">Default</option>
-                  <option value="custom">Custom</option>
-                </select>
-              </td>
-            </tr>
-            <tr id="q_fg_color_picker_row" class="sub-option">
-              <th scope="row">
-                <label for="q_fg_color_picker">Choose color:</label>
-              </th>
-              <td>
-                <input
-                  id="q_fg_color_picker"
-                  type="color"
-                  name="q_fg_color_picker"
-                  aria-label="Pick custom user input text color"
-                />
-              </td>
-            </tr>
-            <tr>
-              <th scope="row">
-                <label for="page_break">Page breaks:</label>
-              </th>
-              <td>
-                <select
-                  name="page_break"
-                  id="page_break"
-                  aria-label="Select page break behavior"
-                >
-                  <option value="">Auto</option>
-                  <option value="after">After each capture</option>
-                </select>
-              </td>
-            </tr>
-            <tr>
-              <th scope="row">
-                <label for="toc">Table of contents:</label>
-              </th>
-              <td>
-                <div class="flex-center">
-                  <select
-                    name="toc"
-                    id="toc"
-                    aria-label="Choose the presence of a table of contents"
-                  >
-                    <option value="">None</option>
-                    <option value="basic">Standard</option>
-                    <option value="numbering">Numbered</option>
-                  </select>
-                  <div class="toc-note">
-                    (The table of contents will be generated from capture
-                    titles)
-                  </div>
-                </div>
-              </td>
-            </tr>
-            <tr>
-              <th scope="row">
-                <label for="model_name">Include AI model info:</label>
-              </th>
-              <td>
-                <input
-                  type="checkbox"
-                  id="model_name"
-                  name="model_name"
-                  aria-label="Include AI commentary model info in PDF"
-                />
-              </td>
-            </tr>
-          </table>
-          <div class="mb-3"></div>
-          <div>
-            <button
-              id="save"
-              class="save mt-3 mr-2"
-              aria-label="Apply changes to export options"
-            >
-              Apply Changes
-            </button>
-            <button
-              id="reset"
-              class="mt-3"
-              aria-label="Reset export options to default"
-            >
-              Reset
-            </button>
-            <span id="status" style="display: none" aria-live="assertive">
-              Saved
-            </span>
-          </div>
-        </form>
-      </section>
-      <footer style="line-height: 1.5; margin-top: 2em">
-        <p>
-          For support with IUB, contact us at
-          <strong>support@iub-rec.com</strong> or visit our
-          <a
-            href="https://iub-rec.com/contact"
-            title="Contact us"
-            target="_blank"
-          >
-            contact page</a
-          >.
-        </p>
-      </footer>
+      </form>
     </main>
+
+    <script src="options.js" type="module"></script>
     <script type="module" src="options-i18n.js"></script>
-    <script type="module" src="options.js"></script>
   </body>
 </html>
