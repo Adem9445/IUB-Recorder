@@ -79,6 +79,14 @@ async function captureFullPage(tab) {
       null,
       { format: "jpeg", quality: 60 },
       (dataUrl) => {
+        if (chrome.runtime.lastError || !dataUrl) {
+          console.error("Full page capture failed", chrome.runtime.lastError);
+          safeSendMessage({
+            action: "recordingError",
+            message: "Full page capture failed. Try again on a regular webpage."
+          });
+          return;
+        }
         safeSendMessage({
           action: "snapshot",
           dataUrl,
@@ -98,6 +106,14 @@ function captureVisibleArea(tab) {
     null,
     { format: "jpeg", quality: 60 },
     (dataUrl) => {
+      if (chrome.runtime.lastError || !dataUrl) {
+        console.error("Visible area capture failed", chrome.runtime.lastError);
+        safeSendMessage({
+          action: "recordingError",
+          message: "Couldn't capture the visible area. Try reloading the tab."
+        });
+        return;
+      }
       safeSendMessage({
         action: "snapshot",
         dataUrl,
@@ -406,8 +422,12 @@ function handlePageClick(request) {
       null,
       { format: "jpeg", quality: proFeatures.highQuality ? 85 : 60 },
       async (dataUrl) => {
-        if (chrome.runtime.lastError) {
+        if (chrome.runtime.lastError || !dataUrl) {
           console.error("Capture failed:", chrome.runtime.lastError);
+          safeSendMessage({
+            action: "recordingError",
+            message: "We couldn't grab that click. Reopen the page and try again."
+          });
           return;
         }
         console.log("Background captured dataUrl, drawing click indicator");
@@ -468,8 +488,18 @@ async function captureAndSave(features, options = {}) {
     }
 
     const quality = features.highQuality ? 75 : 50;
-    dataUrl = await new Promise((resolve) => {
-      chrome.tabs.captureVisibleTab(null, { format: "jpeg", quality }, resolve);
+    dataUrl = await new Promise((resolve, reject) => {
+      chrome.tabs.captureVisibleTab(null, { format: "jpeg", quality }, (captured) => {
+        if (chrome.runtime.lastError || !captured) {
+          reject(
+            new Error(
+              chrome.runtime.lastError?.message || "Unable to capture the current tab"
+            )
+          );
+          return;
+        }
+        resolve(captured);
+      });
     });
 
     const timestamp = new Date().toISOString().replace(/[:.]/g, "-");
@@ -509,6 +539,10 @@ async function captureAndSave(features, options = {}) {
     });
   } catch (error) {
     console.error("Capture failed:", error);
+    safeSendMessage({
+      action: "recordingError",
+      message: error.message || "Something went wrong while capturing."
+    });
     throw error;
   }
 }

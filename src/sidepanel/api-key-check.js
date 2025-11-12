@@ -6,12 +6,12 @@ const infoBtn = document.getElementById("ai-info-btn");
 function setInfoIconState(enabled) {
   if (!infoBtn) return;
   if (enabled) {
-    infoBtn.title = "AI-funksjoner er aktivert";
+    infoBtn.title = "AI features are enabled";
     infoBtn.style.background = "#eafaf1";
     infoBtn.style.color = "#065f46";
     infoBtn.textContent = "✅";
   } else {
-    infoBtn.title = "AI-funksjoner er ikke aktivert. Klikk for å legge til API-nøkkel";
+    infoBtn.title = "AI features are disabled. Click to add an API key";
     infoBtn.style.background = "#fef2f2";
     infoBtn.style.color = "#991b1b";
     infoBtn.textContent = "ℹ️";
@@ -38,8 +38,8 @@ if (infoBtn) {
 function showInfoToast() {
   const toast = document.createElement("div");
   toast.innerHTML = `
-    <strong>AI-funksjoner er ikke aktivert</strong><br/>
-    Legg til OpenAI API-nøkkel for AI-beskrivelser av screenshots
+    <strong>AI features are not enabled</strong><br/>
+    Add your OpenAI API key to generate AI screenshot descriptions
   `;
   toast.style.cssText = `
     position: fixed; top: 14px; left: 50%; transform: translateX(-50%);

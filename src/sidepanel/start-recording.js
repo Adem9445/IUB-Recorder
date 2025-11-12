@@ -6,6 +6,8 @@ import {
   clearChat
 } from "./chat-ui.js";
 
+import { showWarning, showError, showInfo } from "./feedback.js";
+
 import { 
   checkStorageQuota, 
   autoCleanupIfNeeded 
@@ -62,33 +64,6 @@ function shortenUrl(url) {
   }
 }
 
-// Helper function to show warnings
-function showWarning(message) {
-  const chatContainer = document.getElementById('chat-container');
-  if (!chatContainer) return;
-  
-  const warning = document.createElement('div');
-  warning.style.cssText = `
-    background: linear-gradient(135deg, #f59e0b 0%, #ef4444 100%);
-    color: white;
-    padding: 12px 16px;
-    border-radius: 10px;
-    margin: 12px 0;
-    font-weight: 600;
-    text-align: center;
-    animation: fadeInUp 0.5s ease-in-out;
-    box-shadow: 0 4px 12px rgba(239, 68, 68, 0.3);
-  `;
-  warning.textContent = message;
-  chatContainer.appendChild(warning);
-  
-  // Auto-remove after 5 seconds
-  setTimeout(() => {
-    warning.style.animation = 'fadeOut 0.5s ease-in-out';
-    setTimeout(() => warning.remove(), 500);
-  }, 5000);
-}
-
 // Listen for snapshot messages from background
 chrome.runtime.onMessage.addListener((message, sender) => {
   console.log("Received message in sidepanel:", message);
@@ -96,7 +71,10 @@ chrome.runtime.onMessage.addListener((message, sender) => {
     if (message.dataUrl) {
       // Check if we've reached the limit
       if (captures.length >= MAX_CAPTURES) {
-        showWarning(`⚠️ Max ${MAX_CAPTURES} screenshots nådd! Stopp og lagre session.`);
+        showWarning(
+          `⚠️ You've reached the ${MAX_CAPTURES}-screenshot limit. Stop and save before recording more.`,
+          { duration: 12000 }
+        );
         console.warn(`Maximum ${MAX_CAPTURES} screenshots reached`);
         return;
       }
@@ -108,14 +86,14 @@ chrome.runtime.onMessage.addListener((message, sender) => {
             <strong style="color: #667eea;">${message.title}</strong>
           </div>
           <div style="font-size: 13px; color: #475569; margin-bottom: 4px;">
-            <strong>👉 På side:</strong> ${pageInfo.title}
+            <strong>👉 On page:</strong> ${pageInfo.title}
           </div>
           <div style="font-size: 12px; color: #94a3b8;">
             🌐 ${pageInfo.url}
           </div>
           <div style="margin-top: 8px; padding-top: 8px; border-top: 1px solid #e2e8f0;">
             <span style="color: #64748b; font-style: italic; font-size: 12px;">
-              Klikk ✎ for å legge til mer beskrivelse...
+              Click ✎ to add more detail...
             </span>
           </div>
         `;
@@ -131,9 +109,13 @@ chrome.runtime.onMessage.addListener((message, sender) => {
       
       // Warn when getting close to limit
       if (captures.length === MAX_CAPTURES - 5) {
-        showWarning(`⚠️ ${MAX_CAPTURES - captures.length} screenshots igjen før grense`);
+        showWarning(
+          `⚠️ ${MAX_CAPTURES - captures.length} screenshots left before you hit the session limit.`
+        );
       }
     }
+  } else if (message.action === "recordingError" && message.message) {
+    showError(`Recording issue: ${message.message}`);
   } else if (message.action === "toggleRecording") {
     // Toggle recording via keyboard shortcut
     if (startBtn.hidden) {
@@ -151,6 +133,11 @@ function handleClickCapture(e) {
     null,
     { format: "png", quality: 70 },
     (dataUrl) => {
+      if (chrome.runtime.lastError || !dataUrl) {
+        showError("Couldn't capture this tab. Try again or reload the page.");
+        console.error("captureVisibleTab failed", chrome.runtime.lastError);
+        return;
+      }
       const title = "Screenshot " + (captures.length + 1);
       // Add bubble with title only
       const html = `<strong>${title}</strong>`;
@@ -163,28 +150,35 @@ function handleClickCapture(e) {
 if (startBtn && stopBtn) {
   startBtn.addEventListener("click", async () => {
     // Clear old captures from storage FIRST to free space
-    await chrome.storage.local.remove(['captures']);
-    console.log('Cleared old captures from storage');
-    
+    await chrome.storage.local.remove(["captures"]);
+    console.log("Cleared old captures from storage");
+
+    chrome.storage.local.set({ hasSeenSidepanelIntro: true });
+    const onboarding = document.getElementById("onboarding-card");
+    if (onboarding) onboarding.setAttribute("aria-hidden", "true");
+
     // Check storage before starting
     const storageCheck = await checkStorageQuota();
     if (storageCheck.warning) {
       showWarning(storageCheck.message);
-      
+
       if (storageCheck.level === 'critical') {
         // Auto-cleanup
         const cleanup = await autoCleanupIfNeeded();
         if (cleanup.cleaned) {
-          showWarning('✅ Automatisk opprydding fullført');
+          showInfo("✅ Automatic cleanup completed.");
         }
       }
     }
-    
+
     captures.length = 0;
     clearChat();
     showChatScreen();
     startBtn.hidden = true;
     stopBtn.hidden = false;
+    showInfo("Recording started. Click anywhere in the tab to capture key steps.", {
+      duration: 7000
+    });
     // Inject page click listener into active tab
     const [tab] = await chrome.tabs.query({
       active: true,
@@ -192,6 +186,9 @@ if (startBtn && stopBtn) {
     });
     if (tab.url.startsWith("chrome://")) {
       console.error("Cannot record on chrome:// URLs");
+      showError("Chrome internal pages can't be recorded. Switch to a regular tab.");
+      startBtn.hidden = false;
+      stopBtn.hidden = true;
       return;
     }
     contentTabId = tab.id;
@@ -205,10 +202,17 @@ if (startBtn && stopBtn) {
     }
 
     // Now inject the new listener
-    await chrome.scripting.executeScript({
-      target: { tabId: contentTabId },
-      files: ["src/content/page-click-listener.js"]
-    });
+    try {
+      await chrome.scripting.executeScript({
+        target: { tabId: contentTabId },
+        files: ["src/content/page-click-listener.js"]
+      });
+    } catch (err) {
+      console.error("Failed to inject page-click-listener", err);
+      showError("Couldn't start the click listener. Reload the tab and try again.");
+      stopBtn.click();
+      return;
+    }
 
     // Also inject click indicator if enabled
     chrome.storage.local.get(["showClickIndicator"], async (result) => {
@@ -234,11 +238,16 @@ if (startBtn && stopBtn) {
               .sendMessage(contentTabId, { action: "stopRecording" })
               .catch(() => {});
             setTimeout(() => {
-              chrome.scripting.executeScript({
-                target: { tabId: contentTabId },
-                files: ["src/content/page-click-listener.js"]
-              });
-              
+              chrome.scripting
+                .executeScript({
+                  target: { tabId: contentTabId },
+                  files: ["src/content/page-click-listener.js"]
+                })
+                .catch((err) => {
+                  console.error("Failed to re-inject listener", err);
+                  showError("Lost connection to the page. Restart the recording.");
+                });
+
               // Re-inject click indicator if enabled
               chrome.storage.local.get(["showClickIndicator"], (result) => {
                 if (result.showClickIndicator !== false) {
@@ -288,6 +297,7 @@ if (startBtn && stopBtn) {
       }
       // Save session and open editor
       chrome.runtime.sendMessage({ action: "saveSession", captures });
+      showInfo("Session saved. The editor will open in a new tab.");
     },
     true
   );

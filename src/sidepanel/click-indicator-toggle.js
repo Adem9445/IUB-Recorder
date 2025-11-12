@@ -20,7 +20,7 @@ toggleCheckbox.addEventListener("change", (e) => {
   syncIcon(enabled);
   
   // Show feedback
-  showToast(enabled ? "Klikk-indikator aktivert ✅" : "Klikk-indikator deaktivert ⭕");
+  showToast(enabled ? "Click indicator enabled ✅" : "Click indicator disabled ⭕");
 });
 
 // Icon button toggles the hidden checkbox

@@ -294,6 +294,10 @@
         font-family: inherit;
         box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
       }
+      button:focus-visible {
+        outline: 3px solid rgba(102, 126, 234, 0.6);
+        outline-offset: 2px;
+      }
       /* Round icon buttons (header) */
       .icon-btn {
         width: 36px;
@@ -306,6 +310,28 @@
         justify-content: center;
         box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
         font-size: 18px;
+      }
+      .icon-menu {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(72px, 1fr));
+        gap: 8px;
+        width: 100%;
+      }
+      .icon-item {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 6px;
+        text-align: center;
+        font-size: 12px;
+        color: var(--slate-700);
+      }
+      .icon-item .icon-btn {
+        margin: 0 auto;
+      }
+      .icon-label {
+        font-weight: 600;
+        letter-spacing: 0.01em;
       }
       button:hover {
         transform: translateY(-2px);
@@ -443,6 +469,78 @@
         margin-top: 12px;
       }
 
+      #feedback-region {
+        border-radius: 12px;
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+      }
+
+      .feedback-banner {
+        border-radius: 12px;
+        padding: 12px 16px;
+        font-size: 13px;
+        font-weight: 600;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        box-shadow: 0 6px 16px rgba(15, 23, 42, 0.12);
+        animation: fadeIn 0.35s ease;
+      }
+
+      .feedback-banner[data-kind="info"] {
+        background: linear-gradient(135deg, #e0f2fe 0%, #bfdbfe 100%);
+        color: #1d4ed8;
+      }
+
+      .feedback-banner[data-kind="warning"] {
+        background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%);
+        color: #92400e;
+      }
+
+      .feedback-banner[data-kind="error"] {
+        background: linear-gradient(135deg, #fee2e2 0%, #fecaca 100%);
+        color: #b91c1c;
+      }
+
+      .feedback-banner button {
+        background: transparent;
+        box-shadow: none;
+        padding: 4px 8px;
+        font-size: 12px;
+        font-weight: 600;
+        color: inherit;
+      }
+
+      #onboarding-card {
+        background: linear-gradient(135deg, rgba(102, 126, 234, 0.12) 0%, rgba(118, 75, 162, 0.18) 100%);
+        border: 1px solid rgba(99, 102, 241, 0.35);
+        border-radius: 16px;
+        padding: 16px;
+        display: none;
+        flex-direction: column;
+        gap: 12px;
+        color: var(--slate-800);
+      }
+
+      #onboarding-card[aria-hidden="false"] {
+        display: flex;
+        animation: fadeIn 0.45s ease;
+      }
+
+      #onboarding-card ol {
+        padding-left: 18px;
+        display: flex;
+        flex-direction: column;
+        gap: 6px;
+      }
+
+      #limit-hint {
+        font-size: 12px;
+        color: #475569;
+        text-align: center;
+      }
+
       /* Modern Toggle Switch */
       .settings-container {
         display: flex;
@@ -520,16 +618,6 @@
           0 0 0 3px rgba(102, 126, 234, 0.1);
       }
 
-      /* Settings button hover effect */
-      #open-settings-btn:hover {
-        transform: scale(1.1) rotate(90deg);
-        box-shadow: 0 6px 20px rgba(102, 126, 234, 0.5);
-      }
-
-      #open-settings-btn:active {
-        transform: scale(0.95) rotate(90deg);
-      }
-
       /* Toast animations */
       @keyframes slideUp {
         from {
@@ -565,170 +653,176 @@
   </head>
   <body>
     <div id="sidepanel-home-root" style="animation: fadeIn 0.8s ease-in-out">
-      <!-- Header with Settings Button -->
-      <div
+      <header
         style="
           display: flex;
-          justify-content: space-between;
-          align-items: center;
+          flex-direction: column;
+          gap: 16px;
           margin-bottom: 16px;
           padding-bottom: 12px;
           border-bottom: 2px solid rgba(102, 126, 234, 0.2);
           animation: fadeInUp 0.4s ease-in-out;
         "
       >
-        <h3
+        <div
           style="
-            margin: 0;
-            font-size: 18px;
-            font-weight: 700;
-            color: #1e293b;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            background-clip: text;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 12px;
           "
         >
-          📸 IUB
-        </h3>
-        <div
-          class="icon-toolbar"
-          style="display: flex; gap: 8px; align-items: center"
-        >
-          <button
-            id="menu-btn"
-            class="icon-btn"
-            title="Meny"
+          <div
             style="
-              width: 36px;
-              height: 36px;
-              border-radius: 50%;
-              background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-              color: white;
               display: flex;
-              align-items: center;
-              justify-content: center;
-              box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+              flex-direction: column;
+              gap: 4px;
             "
           >
-            ⚙️
-          </button>
-          <button
-            id="toggle-click-indicator-btn"
-            class="icon-btn"
-            title="Vis klikk-indikator"
-            aria-pressed="true"
-            style="
-              width: 36px;
-              height: 36px;
-              border-radius: 50%;
-              background: #f1f5f9;
-              color: #0f172a;
-              display: flex;
-              align-items: center;
-              justify-content: center;
-              box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
-            "
-          >
-            🎯
-          </button>
-          <button
-            id="open-workspace"
-            class="icon-btn"
-            title="Open Workspace"
-            style="
-              width: 36px;
-              height: 36px;
-              border-radius: 50%;
-              background: #f8fafc;
-              color: #0f172a;
-              display: flex;
-              align-items: center;
-              justify-content: center;
-              box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
-            "
-          >
-            🏠
-          </button>
-          <button
-            id="open-privacy"
-            class="icon-btn"
-            title="Personvernerklæring"
-            style="
-              width: 36px;
-              height: 36px;
-              border-radius: 50%;
-              background: #f8fafc;
-              color: #0f172a;
-              display: flex;
-              align-items: center;
-              justify-content: center;
-              box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
-            "
-          >
-            🔒
-          </button>
-          <button
-            id="open-terms"
-            class="icon-btn"
-            title="Terms of service"
-            style="
-              width: 36px;
-              height: 36px;
-              border-radius: 50%;
-              background: #f8fafc;
-              color: #0f172a;
-              display: flex;
-              align-items: center;
-              justify-content: center;
-              box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
-            "
-          >
-            📜
-          </button>
-          <button
-            id="donate-btn"
-            class="icon-btn"
-            title="Doner til videre utvikling"
-            style="
-              width: 36px;
-              height: 36px;
-              border-radius: 50%;
-              background: #fee2e2;
-              color: #b91c1c;
-              display: flex;
-              align-items: center;
-              justify-content: center;
-              box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
-            "
-          >
-            ❤️
-          </button>
+            <h1 style="margin: 0; font-size: 20px; font-weight: 700; color: var(--slate-800);">
+              IUB Recorder
+            </h1>
+            <p style="font-size: 13px; color: #475569;">
+              Capture smarter walkthroughs with AI assistance and clear steps.
+            </p>
+          </div>
         </div>
-      </div>
+        <nav class="icon-menu" aria-label="Quick links">
+          <div class="icon-item">
+            <button
+              id="menu-btn"
+              class="icon-btn"
+              type="button"
+              aria-label="Open quick menu"
+              title="Open quick menu"
+            >
+              ⚙️
+            </button>
+            <span class="icon-label">Menu</span>
+          </div>
+          <div class="icon-item">
+            <button
+              id="toggle-click-indicator-btn"
+              class="icon-btn"
+              type="button"
+              aria-pressed="true"
+              aria-label="Toggle click indicator"
+              title="Toggle click indicator"
+            >
+              🎯
+            </button>
+            <span class="icon-label">Click marker</span>
+          </div>
+          <div class="icon-item">
+            <button
+              id="open-workspace"
+              class="icon-btn"
+              type="button"
+              aria-label="Open workspace editor"
+              title="Open workspace editor"
+            >
+              🏠
+            </button>
+            <span class="icon-label">Workspace</span>
+          </div>
+          <div class="icon-item">
+            <button
+              id="open-privacy"
+              class="icon-btn"
+              type="button"
+              aria-label="View privacy policy"
+              title="View privacy policy"
+            >
+              🔒
+            </button>
+            <span class="icon-label">Privacy</span>
+          </div>
+          <div class="icon-item">
+            <button
+              id="open-terms"
+              class="icon-btn"
+              type="button"
+              aria-label="Read terms of service"
+              title="Read terms of service"
+            >
+              📜
+            </button>
+            <span class="icon-label">Terms</span>
+          </div>
+          <div class="icon-item">
+            <button
+              id="donate-btn"
+              class="icon-btn"
+              type="button"
+              aria-label="Support development"
+              title="Support development"
+            >
+              ❤️
+            </button>
+            <span class="icon-label">Support</span>
+          </div>
+        </nav>
+      </header>
 
-      <!-- API Key Info banner removed; replaced by compact info icon in header -->
-
-      <!-- Hidden checkbox to preserve existing JS logic; controlled by icon button -->
       <div style="display: none">
         <input type="checkbox" id="show-click-indicator" checked />
       </div>
 
-      <!-- Big Open Workspace button removed; use icon in header -->
+      <div id="feedback-region" aria-live="polite" aria-atomic="true"></div>
+
+      <section
+        id="onboarding-card"
+        aria-hidden="true"
+        aria-labelledby="onboarding-title"
+      >
+        <div style="display: flex; justify-content: space-between; align-items: center;">
+          <div>
+            <h2
+              id="onboarding-title"
+              style="font-size: 16px; font-weight: 700; margin-bottom: 4px;"
+            >
+              New to IUB Recorder?
+            </h2>
+            <p style="font-size: 13px; color: #475569;">
+              Follow these steps the first time you record.
+            </p>
+          </div>
+          <button
+            id="onboarding-dismiss"
+            type="button"
+            style="background: transparent; box-shadow: none; color: var(--slate-700); padding: 4px 8px;"
+            aria-label="Hide welcome tips"
+          >
+            Got it
+          </button>
+        </div>
+        <ol>
+          <li>Choose the tab you want to document.</li>
+          <li>Click elements as usual – we capture up to 15 key moments.</li>
+          <li>Edit or comment on each step before exporting.</li>
+        </ol>
+        <p style="font-size: 12px; color: #1d4ed8;">
+          Tip: Need to record more than 15 screenshots? Stop and start a new session to keep things speedy.
+        </p>
+      </section>
+
+      <p id="limit-hint">You can capture up to 15 screenshots per session.</p>
       <button
         id="start-recording"
         style="animation: fadeInRight 0.8s ease-in-out"
       >
-        <span>🎬</span> Start Recording
+        <span aria-hidden="true">🎬</span>
+        <span>Start recording</span>
       </button>
       <button
         id="stop-recording"
         hidden
         style="animation: pulse 1.5s ease-in-out infinite"
       >
-        <span>⏹️</span> Stop Recording
+        <span aria-hidden="true">⏹️</span>
+        <span>Stop recording</span>
       </button>
-      <div id="chat-container"></div>
+      <div id="chat-container" role="region" aria-live="polite" aria-label="Recording steps"></div>
       <!-- Hidden PayPal Donate Form -->
       <div style="display: none">
         <form
@@ -767,5 +861,6 @@
     <script type="module" src="./menu.js"></script>
     <script type="module" src="./open-privacy.js"></script>
     <script type="module" src="./donate.js"></script>
+    <script type="module" src="./onboarding.js"></script>
   </body>
 </html>
