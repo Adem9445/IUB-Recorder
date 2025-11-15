@@ -428,6 +428,20 @@
         border: 1px solid rgba(148, 163, 184, 0.25);
       }
 
+      .iub-menu-popover .video-controls {
+        margin-top: 0;
+        width: 100%;
+        padding: 12px;
+      }
+
+      .iub-menu-popover .video-buttons {
+        flex-direction: column;
+      }
+
+      .iub-menu-popover .video-buttons button {
+        width: 100%;
+      }
+
       .video-controls-header {
         display: flex;
         justify-content: space-between;
@@ -895,27 +909,34 @@
         <span aria-hidden="true">⏹️</span>
         <span>Stop recording</span>
       </button>
-      <div class="video-controls" aria-labelledby="video-controls-title">
-        <div class="video-controls-header">
-          <span class="video-heading" id="video-controls-title">
-            Need a video instead?
-          </span>
-          <label class="video-audio-toggle" for="video-include-audio">
-            <input type="checkbox" id="video-include-audio" checked />
-            Include microphone audio
-          </label>
+      <div id="video-controls-slot">
+        <div
+          class="video-controls"
+          id="video-controls"
+          hidden
+          aria-labelledby="video-controls-title"
+        >
+          <div class="video-controls-header">
+            <span class="video-heading" id="video-controls-title">
+              Need a video instead?
+            </span>
+            <label class="video-audio-toggle" for="video-include-audio">
+              <input type="checkbox" id="video-include-audio" checked />
+              Include microphone audio
+            </label>
+          </div>
+          <div class="video-buttons">
+            <button id="start-video-recording" type="button">
+              <span aria-hidden="true">🎥</span>
+              <span>Start screen recording</span>
+            </button>
+            <button id="stop-video-recording" type="button" hidden>
+              <span aria-hidden="true">⏹️</span>
+              <span>Stop screen recording</span>
+            </button>
+          </div>
+          <p id="video-status" hidden aria-live="polite"></p>
         </div>
-        <div class="video-buttons">
-          <button id="start-video-recording" type="button">
-            <span aria-hidden="true">🎥</span>
-            <span>Start screen recording</span>
-          </button>
-          <button id="stop-video-recording" type="button" hidden>
-            <span aria-hidden="true">⏹️</span>
-            <span>Stop screen recording</span>
-          </button>
-        </div>
-        <p id="video-status" hidden aria-live="polite"></p>
       </div>
       <div id="chat-container" role="region" aria-live="polite" aria-label="Recording steps"></div>
       <!-- Hidden PayPal Donate Form -->
