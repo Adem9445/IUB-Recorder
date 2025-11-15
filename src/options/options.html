@@ -37,7 +37,7 @@
       <section class="intro-callout" aria-label="Quick start guide">
         <h2>Quick start</h2>
         <ol>
-          <li>Add your OpenAI API key so the assistant can describe each step.</li>
+          <li>Add your preferred AI API key so the assistant can describe each step.</li>
           <li>Choose how we capture the screen when you click.</li>
           <li>Open the advanced sections only when you need export or cloud options.</li>
         </ol>
@@ -70,7 +70,7 @@
           <div id="ai-status">
             <div><strong>Status:</strong> <span id="ai-status-text">Checking…</span></div>
             <p class="card-hint">
-              Add your OpenAI API key below to unlock automatic screenshot descriptions.
+              Connect any supported AI provider below to unlock automatic screenshot descriptions.
             </p>
           </div>
         </article>
@@ -96,23 +96,72 @@
         <section class="settings-group">
           <h3 class="settings-heading" id="sidepanel-group-title">Side panel basics</h3>
           <div class="form-row">
-            <label for="api_key">OpenAI API key</label>
+            <label for="ai_provider">AI provider</label>
             <div class="input-stack">
-              <input
-                type="password"
-                name="api_key"
-                id="api_key"
-                placeholder="sk-proj-..."
-                aria-describedby="api-key-status api-key-hint"
-              />
+              <select name="ai_provider" id="ai_provider">
+                <option value="openai">OpenAI</option>
+                <option value="gemini">Google Gemini</option>
+                <option value="deepseek">DeepSeek</option>
+              </select>
               <div class="status-inline" id="api-key-status" data-state="missing">
                 Missing – enter your key to enable AI features.
               </div>
               <small id="api-key-hint">
-                Required for AI-powered side panel captions. Get your key from
-                <a href="https://platform.openai.com/api-keys" target="_blank" rel="noopener">
-                  OpenAI
-                </a>.
+                Required for AI-powered side panel captions. Provide a key from the selected provider.
+              </small>
+            </div>
+          </div>
+
+          <div class="form-row ai-key-row" data-provider="openai">
+            <label for="api_key_openai">OpenAI API key</label>
+            <div class="input-stack">
+              <input
+                type="password"
+                name="api_key_openai"
+                id="api_key_openai"
+                placeholder="sk-proj-..."
+                data-ai-provider="openai"
+                autocomplete="off"
+              />
+              <small>
+                Get your key from
+                <a href="https://platform.openai.com/api-keys" target="_blank" rel="noopener">OpenAI</a>.
+              </small>
+            </div>
+          </div>
+
+          <div class="form-row ai-key-row" data-provider="gemini">
+            <label for="api_key_gemini">Gemini API key</label>
+            <div class="input-stack">
+              <input
+                type="password"
+                name="api_key_gemini"
+                id="api_key_gemini"
+                placeholder="AIz..."
+                data-ai-provider="gemini"
+                autocomplete="off"
+              />
+              <small>
+                Create a key in
+                <a href="https://aistudio.google.com/app/apikey" target="_blank" rel="noopener">Google AI Studio</a>.
+              </small>
+            </div>
+          </div>
+
+          <div class="form-row ai-key-row" data-provider="deepseek">
+            <label for="api_key_deepseek">DeepSeek API key</label>
+            <div class="input-stack">
+              <input
+                type="password"
+                name="api_key_deepseek"
+                id="api_key_deepseek"
+                placeholder="sk-..."
+                data-ai-provider="deepseek"
+                autocomplete="off"
+              />
+              <small>
+                Generate a key from
+                <a href="https://platform.deepseek.com/api-keys" target="_blank" rel="noopener">DeepSeek</a>.
               </small>
             </div>
           </div>

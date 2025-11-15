@@ -1,4 +1,11 @@
 import { sessionSync } from "../utils/session-sync.js";
+import {
+  DEFAULT_AI_PROVIDER,
+  getProviderLabel,
+  requestVisionCompletion,
+  resolveActiveKey,
+  sanitizeProvider
+} from "../utils/ai-client.js";
 
 // Helper function to send messages with error handling
 function safeSendMessage(message, callback) {
@@ -120,15 +127,49 @@ function toggleRecording(tab) {
 // API key should be stored in chrome.storage.local for security
 // Users can set it in the options page
 let API_KEY = "";
+let AI_PROVIDER = DEFAULT_AI_PROVIDER;
+let AI_API_KEYS = {};
 let captureMode = "full";
 
-// Load API key from storage on startup
-chrome.storage.local.get(["apiKey"], (result) => {
-  if (result.apiKey) {
-    API_KEY = result.apiKey;
-    console.log("API key loaded from storage");
+function applyAISettings(result = {}) {
+  const provider = sanitizeProvider(result.aiProvider);
+  AI_PROVIDER = provider;
+  const hasStoredKeys =
+    typeof result.aiApiKeys === "object" && result.aiApiKeys !== null;
+  AI_API_KEYS = hasStoredKeys ? { ...result.aiApiKeys } : {};
+
+  if (result.apiKey && !hasStoredKeys) {
+    AI_API_KEYS.openai = result.apiKey;
+    chrome.storage.local.set({ aiApiKeys: AI_API_KEYS, aiProvider: provider });
+  }
+
+  const { key } = resolveActiveKey({
+    aiApiKeys: AI_API_KEYS,
+    aiProvider: provider,
+    legacyKey: result.apiKey
+  });
+
+  API_KEY = key || "";
+
+  if (API_KEY) {
+    console.log(`AI key loaded for ${getProviderLabel(provider)}`);
   } else {
-    console.warn("No API key found. Please set it in the options page.");
+    console.warn(
+      `No API key found for ${getProviderLabel(provider)}. Please set it in the options page.`
+    );
+  }
+}
+
+chrome.storage.local.get(["aiProvider", "aiApiKeys", "apiKey"], (result) => {
+  applyAISettings(result);
+});
+
+chrome.storage.onChanged.addListener((changes, namespace) => {
+  if (namespace !== "local") return;
+  if (changes.aiProvider || changes.aiApiKeys || changes.apiKey) {
+    chrome.storage.local.get(["aiProvider", "aiApiKeys", "apiKey"], (result) => {
+      applyAISettings(result);
+    });
   }
 });
 
@@ -562,44 +603,22 @@ async function analyzeWithAI(dataUrl, existingSteps = []) {
   try {
     if (!API_KEY) {
       throw new Error(
-        "API key not configured. Please set it in the options page."
+        `API key for ${getProviderLabel(AI_PROVIDER)} not configured. Please set it in the options page.`
       );
     }
 
-    const response = await fetch("https://api.openai.com/v1/chat/completions", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${API_KEY}`
-      },
-      body: JSON.stringify({
-        model: "gpt-4o",
-        messages: [
-          {
-            role: "user",
-            content: [
-              {
-                type: "text",
-                text: `Analyze this screenshot and describe the key actionable steps a user should take. ${existingSteps.length > 0 ? "Existing steps:\n" + existingSteps.join("\n") + "\nContinue from step " + (existingSteps.length + 1) : "Start from step 1"}`
-              },
-              {
-                type: "image_url",
-                image_url: {
-                  url: dataUrl
-                }
-              }
-            ]
-          }
-        ],
-        max_tokens: 1000
-      })
+    const prompt = `Analyze this screenshot and describe the key actionable steps a user should take. ${existingSteps.length > 0 ? "Existing steps:\n" + existingSteps.join("\n") + "\nContinue from step " + (existingSteps.length + 1) : "Start from step 1"}`;
+
+    const aiText = await requestVisionCompletion({
+      provider: AI_PROVIDER,
+      apiKey: API_KEY,
+      prompt,
+      imageUrls: [dataUrl],
+      maxTokens: 1000,
+      useFastModel: true
     });
 
-    const data = await response.json();
-    if (!response.ok) {
-      throw new Error(data.error?.message || `API error: ${response.status}`);
-    }
-    const steps = data.choices[0].message.content
+    const steps = aiText
       .split("\n")
       .filter((step) => step.trim().length > 0)
       .map((step) => step.replace(/^\d+\.\s*/, "").trim());
@@ -614,46 +633,23 @@ async function generateGuide(captures) {
   try {
     if (!API_KEY) {
       throw new Error(
-        "API key not configured. Please set it in the options page."
+        `API key for ${getProviderLabel(AI_PROVIDER)} not configured. Please set it in the options page.`
       );
     }
 
-    const textContent =
+    const prompt =
       "Create a comprehensive step-by-step user guide based on these screenshots and titles:\n" +
       captures
         .map((cap, i) => "Step " + (i + 1) + ": " + cap.title + "\n")
         .join("");
-    const messages = [
-      {
-        role: "user",
-        content: [
-          {
-            type: "text",
-            text: textContent
-          },
-          ...captures.map((cap) => ({
-            type: "image_url",
-            image_url: { url: cap.dataUrl }
-          }))
-        ]
-      }
-    ];
-    const response = await fetch("https://api.openai.com/v1/chat/completions", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${API_KEY}`
-      },
-      body: JSON.stringify({
-        model: "gpt-4o",
-        messages,
-        max_tokens: 2000
-      })
+
+    return requestVisionCompletion({
+      provider: AI_PROVIDER,
+      apiKey: API_KEY,
+      prompt,
+      imageUrls: captures.map((cap) => cap.dataUrl),
+      maxTokens: 2000
     });
-    const data = await response.json();
-    if (!response.ok)
-      throw new Error(data.error?.message || `API error: ${response.status}`);
-    return data.choices[0].message.content;
   } catch (error) {
     console.error("AI guide generation failed:", error);
     throw error;

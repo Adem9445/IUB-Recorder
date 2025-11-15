@@ -1,3 +1,10 @@
+import {
+  DEFAULT_AI_PROVIDER,
+  getProviderLabel,
+  resolveActiveKey,
+  sanitizeProvider
+} from "../utils/ai-client.js";
+
 document.addEventListener("DOMContentLoaded", () => {
   const form = document.querySelector(".options");
   const saveBtn = document.getElementById("save");
@@ -19,6 +26,9 @@ document.addEventListener("DOMContentLoaded", () => {
   const cloudStatusHint = document.getElementById("cloud-status-hint");
   const cloudFieldRows = document.querySelectorAll(".cloud-field");
   const apiKeyStatus = document.getElementById("api-key-status");
+  const aiProviderSelect = document.getElementById("ai_provider");
+  const aiKeyRows = document.querySelectorAll(".ai-key-row");
+  const aiKeyInputs = document.querySelectorAll("[data-ai-provider]");
 
   const defaultCloudSettings = {
     provider: "local",
@@ -86,6 +96,20 @@ document.addEventListener("DOMContentLoaded", () => {
     }
   }
 
+  function updateAIKeyRows() {
+    if (!aiProviderSelect) return;
+    const provider = sanitizeProvider(aiProviderSelect.value);
+    aiKeyRows.forEach((row) => {
+      const rowProviders = (row.dataset.provider || "")
+        .split(",")
+        .map((p) => sanitizeProvider(p.trim()));
+      row.style.display = rowProviders.includes(provider) ? "" : "none";
+    });
+    const input = form.elements[`api_key_${provider}`];
+    const hasKey = !!(input && input.value && input.value.trim() !== "");
+    setApiKeyStatus(hasKey, provider);
+  }
+
   /**
    * Toggles visibility of provider-specific configuration fields.
    */
@@ -148,12 +172,16 @@ document.addEventListener("DOMContentLoaded", () => {
     });
   }
 
-  function setApiKeyStatus(hasKey) {
+  function setApiKeyStatus(
+    hasKey,
+    provider = sanitizeProvider(aiProviderSelect?.value || DEFAULT_AI_PROVIDER)
+  ) {
     if (!apiKeyStatus) return;
+    const label = getProviderLabel(provider);
     apiKeyStatus.dataset.state = hasKey ? "saved" : "missing";
     apiKeyStatus.textContent = hasKey
-      ? "Saved locally – AI descriptions enabled."
-      : "Missing – enter your key to enable AI features.";
+      ? `${label} key saved locally – AI descriptions enabled.`
+      : `${label} key missing – enter it to enable AI features.`;
   }
 
   if (storageProviderSelect) {
@@ -162,12 +190,27 @@ document.addEventListener("DOMContentLoaded", () => {
     });
   }
 
+  if (aiProviderSelect) {
+    aiProviderSelect.addEventListener("change", () => {
+      updateAIKeyRows();
+    });
+  }
+
   updateCloudFields();
+  updateAIKeyRows();
 
   // Initialize feature cards
   initializeStorageDisplay(refreshCloudStatus);
   initializeAIStatus();
   initializeClickIndicatorToggle();
+
+  chrome.storage.onChanged.addListener((changes, namespace) => {
+    if (namespace === "local" && (changes.apiKey || changes.aiApiKeys || changes.aiProvider)) {
+      initializeAIStatus();
+      updateAIKeyRows();
+      loadOptions();
+    }
+  });
 
   // Load saved options
   loadOptions();
@@ -196,11 +239,12 @@ document.addEventListener("DOMContentLoaded", () => {
     e.preventDefault();
     const formData = new FormData(form);
     const options = {};
-    const apiKey = form.elements["api_key"].value;
+    const provider = sanitizeProvider(aiProviderSelect?.value || DEFAULT_AI_PROVIDER);
 
     for (const [key, value] of formData.entries()) {
       if (
-        key === "api_key" ||
+        key === "ai_provider" ||
+        key.startsWith("api_key_") ||
         key === "storage_provider" ||
         key.startsWith("cloud_")
       ) {
@@ -223,7 +267,7 @@ document.addEventListener("DOMContentLoaded", () => {
       options[input.name] = Number(input.value) || 100;
     });
 
-    const provider = storageProviderSelect
+    const storageProvider = storageProviderSelect
       ? storageProviderSelect.value
       : "local";
     let fileName =
@@ -233,7 +277,7 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 
     const cloudSettings = {
-      provider,
+      provider: storageProvider,
       fileName,
       dropboxPath:
         dropboxPathInput?.value?.trim() || defaultCloudSettings.dropboxPath,
@@ -249,9 +293,21 @@ document.addEventListener("DOMContentLoaded", () => {
       googleDriveToken: gdriveTokenInput?.value?.trim() || ""
     };
 
-    // Save API key separately in local storage for security
-    await chrome.storage.local.set({ apiKey: apiKey || "" });
-    setApiKeyStatus(Boolean(apiKey && apiKey.trim() !== ""));
+    const aiApiKeys = {};
+    aiKeyInputs.forEach((input) => {
+      const id = sanitizeProvider(input.dataset.aiProvider || "");
+      if (!id) return;
+      aiApiKeys[id] = input.value.trim();
+    });
+    const activeKey = aiApiKeys[provider] || "";
+
+    await chrome.storage.local.set({
+      aiProvider: provider,
+      aiApiKeys,
+      apiKey: activeKey
+    });
+    setApiKeyStatus(Boolean(activeKey), provider);
+    updateAIKeyRows();
 
     await chrome.storage.local.set({ cloudStorageTokens: cloudTokens });
     await chrome.storage.sync.set({
@@ -321,19 +377,40 @@ document.addEventListener("DOMContentLoaded", () => {
     );
 
     // Load API key from local storage
-    chrome.storage.local.get(["apiKey", "cloudStorageTokens"], (result) => {
-      if (typeof result.apiKey === "string") {
-        form.elements["api_key"].value = result.apiKey;
+    chrome.storage.local.get(
+      ["aiProvider", "aiApiKeys", "apiKey", "cloudStorageTokens"],
+      (result) => {
+        const provider = sanitizeProvider(result.aiProvider);
+        if (aiProviderSelect) {
+          aiProviderSelect.value = provider;
+        }
+        const storedKeys =
+          result.aiApiKeys && typeof result.aiApiKeys === "object"
+            ? result.aiApiKeys
+            : {};
+        aiKeyInputs.forEach((input) => {
+          const id = sanitizeProvider(input.dataset.aiProvider || "");
+          if (!id) return;
+          const legacy = id === "openai" ? result.apiKey : "";
+          input.value = storedKeys[id] || legacy || "";
+        });
+        const { key } = resolveActiveKey({
+          aiApiKeys: storedKeys,
+          aiProvider: provider,
+          legacyKey: result.apiKey
+        });
+        setApiKeyStatus(Boolean(key), provider);
+        updateAIKeyRows();
+
+        const tokens = result.cloudStorageTokens || {};
+        if (dropboxTokenInput)
+          dropboxTokenInput.value = tokens.dropboxToken || "";
+        if (oneDriveTokenInput)
+          oneDriveTokenInput.value = tokens.oneDriveToken || "";
+        if (gdriveTokenInput)
+          gdriveTokenInput.value = tokens.googleDriveToken || "";
       }
-      setApiKeyStatus(Boolean(result.apiKey && result.apiKey.trim() !== ""));
-      const tokens = result.cloudStorageTokens || {};
-      if (dropboxTokenInput)
-        dropboxTokenInput.value = tokens.dropboxToken || "";
-      if (oneDriveTokenInput)
-        oneDriveTokenInput.value = tokens.oneDriveToken || "";
-      if (gdriveTokenInput)
-        gdriveTokenInput.value = tokens.googleDriveToken || "";
-    });
+    );
   }
 
   function getDefaults() {
@@ -435,27 +512,27 @@ document.addEventListener("DOMContentLoaded", () => {
 
   // Initialize AI status
   function initializeAIStatus() {
-    chrome.storage.local.get(["apiKey"], (result) => {
+    chrome.storage.local.get(["aiProvider", "aiApiKeys", "apiKey"], (result) => {
       const statusText = document.getElementById("ai-status-text");
       const card = document.getElementById("ai-status-card");
+      const provider = sanitizeProvider(result.aiProvider);
+      const { key } = resolveActiveKey({
+        aiApiKeys: result.aiApiKeys,
+        aiProvider: provider,
+        legacyKey: result.apiKey
+      });
+      const label = getProviderLabel(provider);
 
-      if (result.apiKey && result.apiKey.trim() !== "") {
-        statusText.innerHTML = "✅ Enabled";
+      if (key) {
+        statusText.innerHTML = `✅ Enabled (${label})`;
         card.style.background =
           "linear-gradient(135deg, #10b981 0%, #059669 100%)";
-        setApiKeyStatus(true);
+        setApiKeyStatus(true, provider);
       } else {
-        statusText.innerHTML = "❌ Not configured";
+        statusText.innerHTML = `❌ Not configured (${label})`;
         card.style.background =
           "linear-gradient(135deg, #ef4444 0%, #dc2626 100%)";
-        setApiKeyStatus(false);
-      }
-    });
-
-    // Listen for changes
-    chrome.storage.onChanged.addListener((changes, namespace) => {
-      if (namespace === "local" && changes.apiKey) {
-        initializeAIStatus(); // Re-check
+        setApiKeyStatus(false, provider);
       }
     });
   }

@@ -129,14 +129,17 @@ Ultra-modern AI-powered screen capture and documentation platform with full-page
 
 ## ⚙️ Configuration
 
-### OpenAI API Key (Optional)
+### AI API Key (Optional)
 
-To use AI-powered features:
+To use AI-powered features, connect one of the supported providers (OpenAI, Google Gemini, or DeepSeek):
 
-1. Get your API key from [OpenAI Platform](https://platform.openai.com/api-keys)
+1. Create an API key with your preferred provider:
+   - [OpenAI Platform](https://platform.openai.com/api-keys)
+   - [Google AI Studio](https://aistudio.google.com/app/apikey)
+   - [DeepSeek Platform](https://platform.deepseek.com/api-keys)
 2. Click the extension icon in Chrome
 3. Click "Options"
-4. Enter your API key in the "OpenAI API Key" field
+4. Choose the provider from the "AI provider" dropdown and paste the matching API key
 5. Click "Apply Changes"
 
 **Note:** Your API key is stored locally and never shared.
@@ -220,7 +223,7 @@ Screen recording now relies on Chrome's `getDisplayMedia` prompt, so no addition
 ### AI features not working
 
 - Verify your API key is correctly set in Options
-- Check your OpenAI account has available credits
+- Check your AI provider account has available credits or quota
 - Check browser console for error messages
 
 ### Extension not loading
