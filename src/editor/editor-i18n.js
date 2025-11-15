@@ -87,7 +87,7 @@
       ai_generating: 'Generating AI description...',
       ai_attempt: 'Trying ({attempt}/{max})...',
       comment_placeholder: 'Type your comment here...',
-      api_key_missing: 'AI API key is missing\n\nOpen options to add your OpenAI API key.',
+      api_key_missing: 'AI API key is missing\n\nOpen options to add your AI provider API key.',
       no_network: 'No network connection. Try again when you are online.',
       ai_failed: 'AI description failed',
       ai_failed_tip: 'Tip: Check your network and try again.'
@@ -176,7 +176,7 @@
       ai_generating: 'Genererer AI-beskrivelse...',
       ai_attempt: 'Forsøker ({attempt}/{max})...',
       comment_placeholder: 'Skriv din kommentar her...',
-      api_key_missing: 'AI API-nøkkel mangler\n\nGå til innstillinger for å legge til OpenAI API-nøkkel.',
+      api_key_missing: 'AI API-nøkkel mangler\n\nGå til innstillinger for å legge til API-nøkkel fra din leverandør.',
       no_network: 'Ingen nettverkstilkobling. Prøv igjen når du er online.',
       ai_failed: 'AI-beskrivelse feilet',
       ai_failed_tip: 'Tips: Sjekk nettverk og prøv igjen.'

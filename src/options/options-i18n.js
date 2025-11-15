@@ -14,10 +14,13 @@
       sec_sidepanel: 'Side panel basics',
       sec_export: 'AI chat PDF export (advanced)',
       sec_cloud: 'Cloud sync (optional)',
-      api_key_label: 'OpenAI API key:',
-      api_key_hint: 'Required for AI-powered side panel captions. Get your key from',
-      api_key_saved: 'Saved locally – AI descriptions enabled.',
-      api_key_missing: 'Missing – enter your key to enable AI features.',
+      ai_provider_label: 'AI provider:',
+      api_key_openai_label: 'OpenAI API key:',
+      api_key_gemini_label: 'Gemini API key:',
+      api_key_deepseek_label: 'DeepSeek API key:',
+      api_key_hint: 'Required for AI-powered side panel captions. Provide a key from the selected provider.',
+      api_key_saved: 'Key saved locally – AI descriptions enabled.',
+      api_key_missing: 'Key missing – enter it to enable AI features.',
       capture_mode: 'Capture mode:',
       capture_full: 'Full screen',
       capture_click: 'Area around click',
@@ -60,7 +63,7 @@
       card_ai_title: '🤖 AI Features',
       card_ai_status: 'Status:',
       card_ai_checking: 'Checking...',
-      card_ai_hint: 'Add your OpenAI API key below to unlock automatic screenshot descriptions',
+      card_ai_hint: 'Connect any supported AI provider below to unlock automatic screenshot descriptions',
       card_click_title: '🎯 Click indicator',
       card_click_desc: 'Show a red ripple where you clicked on each capture',
       card_click_toggle: 'Enable click indicator'
@@ -76,10 +79,13 @@
       sec_sidepanel: 'Grunnleggende innstillinger',
       sec_export: 'AI Chat PDF-eksport (avansert)',
       sec_cloud: 'Sky-synk (valgfritt)',
-      api_key_label: 'OpenAI API-nøkkel:',
-      api_key_hint: 'Påkrevd for AI-beskrivelser i sidepanelet. Hent nøkkel fra',
-      api_key_saved: 'Lagret lokalt – AI-beskrivelser er aktivert.',
-      api_key_missing: 'Mangler – legg inn nøkkelen for å aktivere AI-funksjoner.',
+      ai_provider_label: 'AI-leverandør:',
+      api_key_openai_label: 'OpenAI API-nøkkel:',
+      api_key_gemini_label: 'Gemini API-nøkkel:',
+      api_key_deepseek_label: 'DeepSeek API-nøkkel:',
+      api_key_hint: 'Påkrevd for AI-beskrivelser i sidepanelet. Oppgi en nøkkel fra valgt leverandør.',
+      api_key_saved: 'Nøkkelen er lagret lokalt – AI-beskrivelser er aktivert.',
+      api_key_missing: 'Nøkkel mangler – legg den inn for å aktivere AI-funksjoner.',
       capture_mode: 'Opptaksmodus:',
       capture_full: 'Fullskjerm',
       capture_click: 'Område rundt klikk',
@@ -122,7 +128,7 @@
       card_ai_title: '🤖 AI-Funksjoner',
       card_ai_status: 'Status:',
       card_ai_checking: 'Sjekker...',
-      card_ai_hint: 'Legg inn API-nøkkelen under for automatiske beskrivelser',
+      card_ai_hint: 'Koble til en støttet AI-leverandør nedenfor for automatiske beskrivelser',
       card_click_title: '🎯 Klikk-indikator',
       card_click_desc: 'Vis rød puls der du klikker i hvert skjermbilde',
       card_click_toggle: 'Aktiver klikk-indikator'
@@ -154,6 +160,16 @@
     setText('sidepanel-group-title', dict.sec_sidepanel);
     setText('export-group-title', dict.sec_export);
     setText('cloud-group-title', dict.sec_cloud);
+    const providerLabel = document.querySelector('label[for="ai_provider"]');
+    if (providerLabel) providerLabel.textContent = dict.ai_provider_label;
+    const openaiLabel = document.querySelector('label[for="api_key_openai"]');
+    if (openaiLabel) openaiLabel.textContent = dict.api_key_openai_label;
+    const geminiLabel = document.querySelector('label[for="api_key_gemini"]');
+    if (geminiLabel) geminiLabel.textContent = dict.api_key_gemini_label;
+    const deepseekLabel = document.querySelector('label[for="api_key_deepseek"]');
+    if (deepseekLabel) deepseekLabel.textContent = dict.api_key_deepseek_label;
+    const keyHint = document.getElementById('api-key-hint');
+    if (keyHint) keyHint.textContent = dict.api_key_hint;
     const keyStatus = document.getElementById('api-key-status');
     if (keyStatus) {
       const state = keyStatus.dataset.state || 'missing';
@@ -184,14 +200,6 @@
     setLabel('toc', dict.toc_label);
     setLabel('model_name', dict.model_info);
 
-    // API hint
-    const hint = document.querySelector('#api_key')?.parentElement?.querySelector('small');
-    if (hint) {
-      const link = hint.querySelector('a');
-      hint.firstChild && (hint.firstChild.textContent = `${dict.api_key_hint} `);
-      if (link) link.textContent = 'OpenAI';
-    }
-
     // Select and option texts by value
     const setOption = (selectId, value, text) => {
       const opt = document.querySelector(`#${selectId} option[value="${value}"]`);
@@ -202,6 +210,9 @@
     setOption('theme', '', dict.theme_auto);
     setOption('theme', 'light', dict.theme_light);
     setOption('theme', 'dark', dict.theme_dark);
+    setOption('ai_provider', 'openai', 'OpenAI');
+    setOption('ai_provider', 'gemini', 'Google Gemini');
+    setOption('ai_provider', 'deepseek', 'DeepSeek');
     setOption('margins', '', dict.margin_default);
     setOption('margins', 'minimal', dict.margin_minimal);
     setOption('margins', 'custom', dict.margin_custom);

@@ -1,45 +1,68 @@
 // api-key-check.js (compact icon UI)
 // Reflect API key status on the info icon and provide a quick path to options
 
+import {
+  getProviderLabel,
+  resolveActiveKey,
+  sanitizeProvider
+} from "../utils/ai-client.js";
+
 const infoBtn = document.getElementById("ai-info-btn");
 
-function setInfoIconState(enabled) {
+function computeState(result = {}) {
+  const provider = sanitizeProvider(result.aiProvider);
+  const { key } = resolveActiveKey({
+    aiApiKeys: result.aiApiKeys,
+    aiProvider: provider,
+    legacyKey: result.apiKey
+  });
+  return {
+    enabled: Boolean(key),
+    provider,
+    label: getProviderLabel(provider)
+  };
+}
+
+function setInfoIconState({ enabled, label }) {
   if (!infoBtn) return;
   if (enabled) {
-    infoBtn.title = "AI features are enabled";
+    infoBtn.title = `${label} is connected for AI features`;
     infoBtn.style.background = "#eafaf1";
     infoBtn.style.color = "#065f46";
     infoBtn.textContent = "✅";
   } else {
-    infoBtn.title = "AI features are disabled. Click to add an API key";
+    infoBtn.title = `AI features are disabled. Click to add a ${label} API key`;
     infoBtn.style.background = "#fef2f2";
     infoBtn.style.color = "#991b1b";
     infoBtn.textContent = "ℹ️";
   }
 }
 
-// Check if API key is set
-chrome.storage.local.get(["apiKey"], (result) => {
-  const hasKey = !!(result.apiKey && result.apiKey.trim() !== "");
-  setInfoIconState(hasKey);
-});
+function refreshState() {
+  chrome.storage.local.get(["aiProvider", "aiApiKeys", "apiKey"], (result) => {
+    setInfoIconState(computeState(result));
+  });
+}
+
+refreshState();
 
 // Info icon opens options and shows a small toast message
 if (infoBtn) {
   infoBtn.addEventListener("click", () => {
-    chrome.storage.local.get(["apiKey"], (result) => {
-      const hasKey = !!(result.apiKey && result.apiKey.trim() !== "");
-      if (!hasKey) showInfoToast();
+    chrome.storage.local.get(["aiProvider", "aiApiKeys", "apiKey"], (result) => {
+      const state = computeState(result);
+      if (!state.enabled) showInfoToast(state.label);
       chrome.runtime.openOptionsPage();
     });
   });
 }
 
-function showInfoToast() {
+function showInfoToast(label) {
+  const providerLabel = label || "AI provider";
   const toast = document.createElement("div");
   toast.innerHTML = `
     <strong>AI features are not enabled</strong><br/>
-    Add your OpenAI API key to generate AI screenshot descriptions
+    Add your ${providerLabel} API key to generate AI screenshot descriptions
   `;
   toast.style.cssText = `
     position: fixed; top: 14px; left: 50%; transform: translateX(-50%);
@@ -57,8 +80,7 @@ function showInfoToast() {
 
 // Listen for storage changes (if user adds API key in options page)
 chrome.storage.onChanged.addListener((changes, namespace) => {
-  if (namespace === "local" && changes.apiKey) {
-    const hasKey = changes.apiKey.newValue && changes.apiKey.newValue.trim() !== "";
-    setInfoIconState(!!hasKey);
+  if (namespace === "local" && (changes.apiKey || changes.aiApiKeys || changes.aiProvider)) {
+    refreshState();
   }
 });

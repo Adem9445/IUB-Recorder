@@ -1,5 +1,12 @@
 import { sessionSync, getCloudSyncMeta } from "../utils/session-sync.js";
 import { PROVIDERS } from "../utils/cloud-storage.js";
+import {
+  DEFAULT_AI_PROVIDER,
+  getProviderLabel,
+  requestVisionCompletion,
+  resolveActiveKey,
+  sanitizeProvider
+} from "../utils/ai-client.js";
 
 // IUB Standalone Editor (No external dependencies)
 // Pure JavaScript implementation
@@ -126,29 +133,54 @@ function getCurrentSession() {
   return sessions[currentSessionIndex];
 }
 
-// Global API key
+// Global AI settings
 let API_KEY = "";
+let AI_PROVIDER = DEFAULT_AI_PROVIDER;
+let AI_API_KEYS = {};
 
 // Load sessions on startup
 document.addEventListener("DOMContentLoaded", () => {
-  loadAPIKey();
+  loadAISettings();
   loadSessions();
   refreshCloudBadge();
   setupEventListeners();
 });
 
-// Load API key from storage
-async function loadAPIKey() {
+// Load AI settings from storage
+async function loadAISettings() {
   try {
-    const result = await chrome.storage.local.get(["apiKey"]);
-    if (result.apiKey) {
-      API_KEY = result.apiKey;
-      console.log("AI API key loaded");
+    const result = await chrome.storage.local.get(["aiProvider", "aiApiKeys", "apiKey"]);
+    const provider = sanitizeProvider(result.aiProvider);
+    AI_PROVIDER = provider;
+    const hasStoredKeys = result.aiApiKeys && typeof result.aiApiKeys === "object";
+    AI_API_KEYS = hasStoredKeys ? { ...result.aiApiKeys } : {};
+    if (result.apiKey && !hasStoredKeys) {
+      AI_API_KEYS.openai = result.apiKey;
+    }
+    const { key } = resolveActiveKey({
+      aiApiKeys: AI_API_KEYS,
+      aiProvider: provider,
+      legacyKey: result.apiKey
+    });
+    API_KEY = key || "";
+    if (API_KEY) {
+      console.log(`AI provider ready: ${getProviderLabel(provider)}`);
+    } else {
+      console.warn(
+        `Missing API key for ${getProviderLabel(provider)} – AI descriptions disabled.`
+      );
     }
   } catch (error) {
-    console.error("Failed to load API key:", error);
+    console.error("Failed to load AI settings:", error);
   }
 }
+
+chrome.storage.onChanged.addListener((changes, namespace) => {
+  if (namespace !== "local") return;
+  if (changes.aiProvider || changes.aiApiKeys || changes.apiKey) {
+    loadAISettings();
+  }
+});
 
 function setupEventListeners() {
   document
@@ -551,7 +583,13 @@ function handleDragEnd() {
 // Generate AI description for a screenshot
 async function generateAIDescription(index) {
   if (!API_KEY) {
-    alert("⚠️ " + i18n('api_key_missing','AI API key is missing\n\nOpen options to add your OpenAI API key.'));
+    alert(
+      "⚠️ " +
+        i18n(
+          'api_key_missing',
+          `AI API key is missing\n\nOpen options to add your ${getProviderLabel(AI_PROVIDER)} API key.`
+        )
+    );
     return;
   }
 
@@ -572,46 +610,41 @@ async function generateAIDescription(index) {
       throw new Error(i18n('no_network','No network connection. Try again when you are online.'));
     }
 
-    const url = "https://api.openai.com/v1/chat/completions";
-    const payload = {
-      model: "gpt-4o-mini",
-      messages: [
-        {
-          role: "user",
-          content: [
-            {
-              type: "text",
-              text: "Analyze this screenshot and write a concise description (2-3 sentences in Norwegian) about what the user should do in this step."
-            },
-            {
-              type: "image_url",
-              image_url: { url: capture.dataUrl }
-            }
-          ]
-        }
-      ],
-      max_tokens: 200
-    };
+    const prompt =
+      "Analyze this screenshot and write a concise description (2-3 sentences in Norwegian) about what the user should do in this step.";
 
     const onAttempt = (attempt, max) => {
       const tmpl = i18n('ai_attempt','Trying ({attempt}/{max})...');
       textarea.placeholder = `🤖 ${tmpl.replace('{attempt}', String(attempt)).replace('{max}', String(max))}`;
     };
 
-    const response = await fetchWithRetry(() => timeoutFetch(url, {
-      method: "POST",
-      headers: { "Content-Type": "application/json", Authorization: `Bearer ${API_KEY}` },
-      body: JSON.stringify(payload)
-    }, 20000), { retries: 2, backoffMs: 800, onAttempt });
-
-    const data = await response.json();
-    if (!response.ok) {
-      throw new Error(data.error?.message || `API error: ${response.status}`);
+    const maxAttempts = 3;
+    let attempt = 0;
+    let aiDescription = "";
+    while (attempt < maxAttempts) {
+      attempt += 1;
+      onAttempt(attempt, maxAttempts);
+      try {
+        aiDescription = await requestVisionCompletion({
+          provider: AI_PROVIDER,
+          apiKey: API_KEY,
+          prompt,
+          imageUrls: [capture.dataUrl],
+          maxTokens: 220,
+          useFastModel: true
+        });
+        break;
+      } catch (error) {
+        console.error("AI description attempt failed:", error);
+        if (attempt >= maxAttempts) {
+          throw error;
+        }
+        await sleep(800 * attempt);
+      }
     }
 
-    const aiDescription = data.choices[0].message.content.trim();
-    textarea.value = aiDescription;
-    capture.description = aiDescription;
+    textarea.value = aiDescription.trim();
+    capture.description = textarea.value;
     await saveSessions();
     console.log("AI description generated for step", index + 1);
   } catch (error) {

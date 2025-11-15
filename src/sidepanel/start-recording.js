@@ -8,10 +8,15 @@ import {
 
 import { showWarning, showError, showInfo } from "./feedback.js";
 
-import { 
-  checkStorageQuota, 
-  autoCleanupIfNeeded 
+import {
+  checkStorageQuota,
+  autoCleanupIfNeeded
 } from "../utils/storage-manager.js";
+import {
+  getProviderLabel,
+  resolveActiveKey,
+  sanitizeProvider
+} from "../utils/ai-client.js";
 
 const startBtn = document.getElementById("start-recording");
 const stopBtn = document.getElementById("stop-recording");
@@ -24,6 +29,21 @@ const aiState = {
   missingKeyNotified: false,
   genericWarningShown: false
 };
+
+async function getActiveProviderInfo() {
+  const result = await chrome.storage.local.get(["aiProvider", "aiApiKeys", "apiKey"]);
+  const provider = sanitizeProvider(result.aiProvider);
+  const { key } = resolveActiveKey({
+    aiApiKeys: result.aiApiKeys,
+    aiProvider: provider,
+    legacyKey: result.apiKey
+  });
+  return {
+    provider,
+    label: getProviderLabel(provider),
+    hasKey: Boolean(key)
+  };
+}
 
 // Helper: strip HTML to plain text for storage in captures
 function stripHtml(html) {
@@ -248,8 +268,9 @@ async function processSnapshot(message) {
     if (missingKey) {
       aiState.unavailable = true;
       if (!aiState.missingKeyNotified) {
+        const { label } = await getActiveProviderInfo();
         showWarning(
-          'Add your OpenAI API key under Settings → API to enable automatic step descriptions.'
+          `Add your ${label} API key under Settings → AI to enable automatic step descriptions.`
         );
         aiState.missingKeyNotified = true;
       }
