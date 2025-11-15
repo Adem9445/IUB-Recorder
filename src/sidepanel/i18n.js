@@ -15,7 +15,8 @@ const I18N = {
     terms: "Terms of service",
     donate: "Donate to development",
     startRecording: "Start Recording",
-    stopRecording: "Stop Recording"
+    stopRecording: "Stop Recording",
+    videoRecording: "Screen recording"
   },
   no: {
     menu: "Meny",
@@ -30,7 +31,8 @@ const I18N = {
     terms: "Vilkår for bruk",
     donate: "Doner til utvikling",
     startRecording: "Start opptak",
-    stopRecording: "Stopp opptak"
+    stopRecording: "Stopp opptak",
+    videoRecording: "Skjermopptak"
   }
 };
 
